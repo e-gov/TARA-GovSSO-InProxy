@@ -1,0 +1,50 @@
+govsso-inproxy:
+  admin:
+    base-url: https://admin.localhost:17443/
+    tls:
+      trust-store: classpath:inproxy.localhost.admin.truststore.p12
+      trust-store-password: changeit
+  hydra:
+    base-url: https://hydra.localhost:14443/
+    tls:
+      trust-store: classpath:inproxy.localhost.hydra.truststore.p12
+      trust-store-password: changeit
+  session:
+    base-url: https://session.localhost:15443/
+    tls:
+      trust-store: classpath:inproxy.localhost.session.truststore.p12
+      trust-store-password: changeit
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: configprops,env,health,info
+  info:
+    git:
+      mode: full
+    java:
+      enabled: true
+    os:
+      enabled: true
+
+server:
+  port: 13443
+  ssl:
+    enabled: true
+    enabled-protocols: TLSv1.3
+    key-store: classpath:inproxy.localhost.keystore.p12
+    key-store-password: changeit
+    key-store-type: PKCS12
+    protocol: TLS
+
+spring:
+  application:
+    name: govsso-inproxy
+  main:
+    banner-mode: off
