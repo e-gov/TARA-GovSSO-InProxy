@@ -5,15 +5,9 @@ govsso-inproxy:
       trust-store: classpath:inproxy.localhost.admin.truststore.p12
       trust-store-password: changeit
   hydra:
-    base-url: https://hydra.localhost:14443/
-    tls:
-      trust-store: classpath:inproxy.localhost.hydra.truststore.p12
-      trust-store-password: changeit
+    base-url: https://hydra.localhost:14442/
   session:
-    base-url: https://session.localhost:15443/
-    tls:
-      trust-store: classpath:inproxy.localhost.session.truststore.p12
-      trust-store-password: changeit
+    base-url: https://session.localhost:15442/
 
 management:
   endpoint:
@@ -38,3 +32,59 @@ spring:
     name: govsso-inproxy
   main:
     banner-mode: off
+  cloud:
+    gateway:
+      httpclient:
+        ssl:
+          trustedX509Certificates:
+            - classpath:govsso-ca.localhost.crt
+      default-filters:
+        - RemoveRequestHeader=traceparent
+        - RemoveRequestHeader=tracestate
+        - RemoveRequestHeader=elastic-apm-traceparent
+      routes:
+        - id: hydra-well-known
+          uri: ${govsso-inproxy.hydra.base-url}
+          predicates:
+            - Path=/.well-known/openid-configuration,/.well-known/jwks.json
+        - id: oauth2-auth
+          uri: ${govsso-inproxy.hydra.base-url}
+          predicates:
+            - Path=/oauth2/auth/** # Also matches /oauth2/auth?param=value
+          filters:
+            - TraceParentFilter
+            - PromptFilter
+        - id: oauth2-sessions-logout
+          uri: ${govsso-inproxy.hydra.base-url}
+          predicates:
+            - Path=/oauth2/sessions/logout
+          filters:
+            - TraceParentFilter
+        - id: oauth2-token-with-allowed-ip
+          uri: ${govsso-inproxy.hydra.base-url}
+          predicates:
+            # TODO GSSO-589: Check that source IP (or X-Forwarded-For header value, depending on the configuration) is in allowlist
+            - Path=/oauth2/token
+#        TODO GSSO-589: Add configuration for IP addresses that are not included in allowlist
+#        - id: oauth2-token-with-not-allowed-ip
+#          uri: https://example.com # Not used, but valid URI is required by Spring
+#          predicates:
+#            TODO GSSO-589: Check that source IP (or X-Forwarded-For header value, depending on the configuration) is NOT in allowlist
+#            - Path=/oauth2/token
+        - id: admin
+          uri: ${govsso-inproxy.session.base-url}
+          predicates:
+            - Path=/admin**,/admin/**
+          filters:
+            - RewritePath=/admin.*, /notfound
+        - id: root
+          uri: https://example.com # Not used, but valid URI is required by Spring
+          filters:
+            - RedirectTo=302, https://www.ria.ee/riigi-infosusteem/elektrooniline-identiteet-ja-usaldusteenused/kesksed-autentimisteenused#govsso
+          predicates:
+            - Path=/
+        - id: default
+          order: 9999 # Very low priority compared to the other routes (order value is 0 by default)
+          uri: ${govsso-inproxy.session.base-url}
+          predicates:
+            - Path=/**

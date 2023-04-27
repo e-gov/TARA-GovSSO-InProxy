@@ -13,10 +13,14 @@ GovSSO Incoming Proxy routes and filters inbound HTTP requests to Ory Hydra and 
 1. Follow [GOVSSO-Session/README.md](https://github.com/e-gov/GOVSSO-Session/blob/master/README.md) to run dependent
    services.
 2. If you have generated new TLS certificates (doable at project GOVSSO-Session) after the last copy, then:
-    * copy-replace `GOVSSO-Session/local/tls/inproxy/*.p12` files to `src/main/resources`;
-    * copy-replace `GOVSSO-Session/local/tls/admin/admin.localhost.keystore.p12`
-      and `GOVSSO-Session/local/tls/hydra/hydra.localhost.keystore.p12` and
-      `GOVSSO-Session/local/tls/session/session.localhost.keystore.p12` to `src/test/resources`.
+    * copy-replace the following files to `src/main/resources`:
+      - `GOVSSO-Session/local/tls/govsso-ca/govsso-ca.localhost.crt`
+      - `GOVSSO-Session/local/tls/inproxy/inproxy.localhost.admin.truststore.p12`
+      - `GOVSSO-Session/local/tls/inproxy/inproxy.localhost.keystore.p12`
+    * copy-replace the following files to `src/test/resources`:
+      - `GOVSSO-Session/local/tls/admin/admin.localhost.keystore.p12`
+      - `GOVSSO-Session/local/tls/hydra/hydra.localhost.keystore.p12`
+      - `GOVSSO-Session/local/tls/session/session.localhost.keystore.p12`
 3. Add `127.0.0.1 admin.localhost hydra.localhost session.localhost` line to `hosts` file. This is needed only for
    requests originating from GOVSSO-InProxy when it's running locally (not in Docker Compose). It's not needed for web
    browsers as popular browsers already have built-in support for resolving `*.localhost` subdomains.
@@ -60,23 +64,13 @@ GovSSO Incoming Proxy routes and filters inbound HTTP requests to Ory Hydra and 
 | `govsso-inproxy.admin.tls.trust-store-password` | Yes | Trust-store password. | `changeit` |
 | `govsso-inproxy.admin.tls.trust-store-type` | No | Trust-store type. If not provided, defaults to `PKCS12`. | `PKCS12` |
 
-### Integration with Ory Hydra
+### Integration with Ory Hydra and GovSSO Session
 
 | Parameter | Mandatory | Description | Example |
 | :-------- | :-------- | :---------- | :------ |
 | `govsso-inproxy.hydra.base-url` | Yes | Ory Hydra public API base URL. | `https://hydra.localhost:14443/` |
-| `govsso-inproxy.hydra.tls.trust-store` | Yes | Location of trust-store, containing trust anchors (CA or end-entity certificates) for verifying TLS connections to Ory Hydra. | `classpath:path/to/trust-store.p12` or `file:/path/to/trust-store.p12` |
-| `govsso-inproxy.hydra.tls.trust-store-password` | Yes | Trust-store password. | `changeit` |
-| `govsso-inproxy.hydra.tls.trust-store-type` | No | Trust-store type. If not provided, defaults to `PKCS12`. | `PKCS12` |
-
-### Integration with GovSSO Session
-
-| Parameter | Mandatory | Description | Example |
-| :-------- | :-------- | :---------- | :------ |
 | `govsso-inproxy.session.base-url` | Yes | GovSSO Session public API base URL. | `https://session.localhost:15443/` |
-| `govsso-inproxy.session.tls.trust-store` | Yes | Location of trust-store, containing trust anchors (CA or end-entity certificates) for verifying TLS connections to GovSSO Session. | `classpath:path/to/trust-store.p12` or `file:/path/to/trust-store.p12` |
-| `govsso-inproxy.session.tls.trust-store-password` | Yes | Trust-store password. | `changeit` |
-| `govsso-inproxy.session.tls.trust-store-type` | No | Trust-store type. If not provided, defaults to `PKCS12`. | `PKCS12` |
+| `spring.cloud.gateway.httpclient.ssl.trustedX509Certificates` | Yes | Location of trust anchors (CA or end-entity certificates) for verifying TLS connections to Ory Hydra and GovSSO Session. | `classpath:path/to/certificate.crt` or `file:/path/to/certificate.crt` |
 
 ## Non-pom.xml Licenses
 
