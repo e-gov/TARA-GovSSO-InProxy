@@ -1,6 +1,6 @@
 govsso-inproxy:
   admin:
-    base-url: https://admin.localhost:17443/
+    base-url: https://admin.localhost:17442/
     tls:
       trust-store: classpath:inproxy.localhost.admin.truststore.p12
       trust-store-password: changeit
@@ -26,6 +26,9 @@ management:
       enabled: true
     os:
       enabled: true
+
+server:
+  forward-headers-strategy: NATIVE
 
 spring:
   application:
@@ -60,17 +63,12 @@ spring:
             - Path=/oauth2/sessions/logout
           filters:
             - TraceParentFilter
-        - id: oauth2-token-with-allowed-ip
+        - id: oauth2-token
           uri: ${govsso-inproxy.hydra.base-url}
           predicates:
-            # TODO GSSO-589: Check that source IP (or X-Forwarded-For header value, depending on the configuration) is in allowlist
             - Path=/oauth2/token
-#        TODO GSSO-589: Add configuration for IP addresses that are not included in allowlist
-#        - id: oauth2-token-with-not-allowed-ip
-#          uri: https://example.com # Not used, but valid URI is required by Spring
-#          predicates:
-#            TODO GSSO-589: Check that source IP (or X-Forwarded-For header value, depending on the configuration) is NOT in allowlist
-#            - Path=/oauth2/token
+          filters:
+            - IpFilter
         - id: admin
           uri: ${govsso-inproxy.session.base-url}
           predicates:

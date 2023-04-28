@@ -36,6 +36,7 @@
         <logstash-logback-encoder.version>7.3</logstash-logback-encoder.version>
         <spring-cloud.version>2021.0.6</spring-cloud.version><!-- Spring Cloud 2021.0.x release train is compatible with Spring Boot 2.7.x -->
         <wiremock.version>2.35.0</wiremock.version>
+        <ipaddress.version>5.4.0</ipaddress.version>
     </properties>
 
     <dependencyManagement>
@@ -62,9 +63,18 @@
             <version>${elastic-apm.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.github.seancfoley</groupId>
+            <artifactId>ipaddress</artifactId>
+            <version>${ipaddress.version}</version>
+        </dependency>
+        <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
             <version>${logstash-logback-encoder.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>

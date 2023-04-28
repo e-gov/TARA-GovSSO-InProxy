@@ -29,6 +29,7 @@ management:
 
 server:
   port: 13443
+  forward-headers-strategy: NATIVE # Under main this cannot be enabled by default, because docker-compose.yml doesn't have another proxy in front of inproxy that would always set X-Forwarded-For header. X-Forwarded-For value that could be set outside of your own infrastructure, cannot be trusted.
   ssl:
     enabled: true
     enabled-protocols: TLSv1.3
@@ -70,17 +71,12 @@ spring:
             - Path=/oauth2/sessions/logout
           filters:
             - TraceParentFilter
-        - id: oauth2-token-with-allowed-ip
+        - id: oauth2-token
           uri: ${govsso-inproxy.hydra.base-url}
           predicates:
-            # TODO: Check that source IP (or X-Forwarded-For header value, depending on the configuration) is in allowlist
             - Path=/oauth2/token
-#        TODO: Add configuration for IP addresses that are not included in allowlist
-#        - id: oauth2-token-with-not-allowed-ip
-#          uri: https://example.com # Not used, but valid URI is required by Spring
-#          predicates:
-#            TODO: Check that source IP (or X-Forwarded-For header value, depending on the configuration) is NOT in allowlist
-#            - Path=/oauth2/token
+          filters:
+            - IpFilter
         - id: admin
           uri: ${govsso-inproxy.session.base-url}
           predicates:

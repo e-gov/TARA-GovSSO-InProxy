@@ -1,13 +1,22 @@
 package ee.ria.govsso.inproxy;
 
+import ee.ria.govsso.inproxy.service.TokenRequestAllowedIpAddressesService;
 import ee.ria.govsso.inproxy.util.TestUtils;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.exactly;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static io.restassured.RestAssured.given;
@@ -21,8 +30,11 @@ public class HydraOAuth2EndpointTest extends BaseTest {
     private static final String PROMPT_PARAMETER_CONSENT_VALUE = "consent";
     private static final String AUTHORIZATION_HEADER_NAME = "Authorization";
 
+    @Autowired
+    private TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService;
+
     @BeforeEach
-    void setupHydraMocks() {
+    void setupServerMocks() {
         HYDRA_MOCK_SERVER.stubFor(get(urlEqualTo("/oauth2/token"))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -40,17 +52,147 @@ public class HydraOAuth2EndpointTest extends BaseTest {
                         .withBodyFile("mock_responses/hydra_oauth2_requests_login.json")));
     }
 
-    @Test
-    // TODO GSSO-589: Split into 2 tests: one should have source IP in allowlist and the other one should not
-    void hydra_oAuthToken_ReturnsToken() {
+    @ParameterizedTest
+    @ValueSource(strings = {"1.2.3.4", "1.2.3.*", "1.2.3.0-100\", \"111.11.11.11"})
+    void hydra_oAuthTokenRequestIpIsInAllowedIps_ReturnsToken(String whitelistedIps) {
+
+        String responseBody = String.format("{\"client-a\":[\"%s\"]}", whitelistedIps);
+
+        ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBody(responseBody)));
+
+        HYDRA_MOCK_SERVER.stubFor(post(urlEqualTo("/oauth2/token"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/hydra_token.json")));
+
+        tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
+
         String expectedResponse = TestUtils.getResourceAsString("__files/mock_responses/hydra_token.json");
         given()
                 .when()
-                .get("/oauth2/token")
+                .contentType("application/x-www-form-urlencoded; charset=utf-8")
+                .header("Authorization", "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
+                .header("X-Forwarded-For", "1.2.3.4")
+                .post("/oauth2/token")
                 .then()
                 .assertThat()
                 .statusCode(200)
                 .body(equalToCompressingWhiteSpace(expectedResponse));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"1.2.3.5-100\", \"111.11.11.11", "1.2.3.2"})
+    void hydra_oAuthTokenRequestIpNotInAllowedIps_Returns400Error(String whitelistedIps) {
+
+        String responseBody = String.format("{\"client-a\":[\"%s\"]}", whitelistedIps);
+
+        ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBody(responseBody)));
+
+        tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
+
+        given()
+                .when()
+                .contentType("application/x-www-form-urlencoded; charset=utf-8")
+                .header("Authorization", "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
+                .header("X-Forwarded-For", "1.2.3.4")
+                .post("/oauth2/token")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .header(HttpHeaders.CONTENT_TYPE, "application/json")
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .header(HttpHeaders.PRAGMA, "no-cache")
+                .body("error", Matchers.equalTo("unauthorized_client"))
+                .body("error_description", Matchers.equalTo("Your IP address 1.2.3.4 is not whitelisted"));
+
+        ADMIN_MOCK_SERVER.verify(exactly(0), postRequestedFor(urlEqualTo("/oauth2/token")));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"Basic", ""}) //TODO Add more tests for odd authorization header cases
+    void hydra_oAuthTokenRequestIncorrectAuthorizationHeader_Returns400Error(String authorizationHeader) {
+
+        given()
+                .when()
+                .contentType("application/x-www-form-urlencoded; charset=utf-8")
+                .header("Authorization", authorizationHeader)
+                .post("/oauth2/token")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .header(HttpHeaders.CONTENT_TYPE, "application/json")
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .header(HttpHeaders.PRAGMA, "no-cache")
+                .body("error", Matchers.equalTo("invalid_grant"))
+                .body("error_description", Matchers.equalTo("The provided authorization grant is invalid."));
+
+        ADMIN_MOCK_SERVER.verify(exactly(0), postRequestedFor(urlEqualTo("/oauth2/token")));
+    }
+
+    @Test
+    void hydra_oAuthTokenRequestMissingAuthorizationHeader_Returns400Error() {
+
+        ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBody("{\"client-a\":[\"127.0.0.1\"]}")));
+
+        tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
+
+        given()
+                .when()
+                .contentType("application/x-www-form-urlencoded; charset=utf-8")
+                .header("X-Forwarded-For", "1.2.3.4")
+                .post("/oauth2/token")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .header(HttpHeaders.CONTENT_TYPE, "application/json")
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .header(HttpHeaders.PRAGMA, "no-cache")
+                .body("error", Matchers.equalTo("invalid_grant"))
+                .body("error_description", Matchers.equalTo("The provided authorization grant is invalid."));
+
+        ADMIN_MOCK_SERVER.verify(exactly(0), postRequestedFor(urlEqualTo("/oauth2/token")));
+    }
+
+    @Test
+    void hydra_oAuthTokenRequestIpInHeaderNotWhitelisted_Returns400Error() {
+
+        ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBody("{\"client-a\":[\"127.0.0.1\"]}")));
+
+        tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
+
+        given()
+                .when()
+                .contentType("application/x-www-form-urlencoded; charset=utf-8")
+                .header("Authorization", "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
+                .header("X-Forwarded-For", "1.1.1.1")
+                .post("/oauth2/token")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .header(HttpHeaders.CONTENT_TYPE, "application/json")
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .header(HttpHeaders.PRAGMA, "no-cache")
+                .body("error", Matchers.equalTo("unauthorized_client"))
+                .body("error_description", Matchers.equalTo("Your IP address 1.1.1.1 is not whitelisted"));
+
+        ADMIN_MOCK_SERVER.verify(exactly(0), postRequestedFor(urlEqualTo("/oauth2/token")));
     }
 
     @Test
@@ -154,8 +296,17 @@ public class HydraOAuth2EndpointTest extends BaseTest {
 
     @Test
     void hydra_requestWithSensitiveHeader_PassesHeaderToHydra() {
+        ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBody("{\"client-a\":[\"1.1.1.1\"]}")));
+
+        tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
+
         given()
-                .header(AUTHORIZATION_HEADER_NAME, "value")
+                .header(AUTHORIZATION_HEADER_NAME, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
+                .header("X-Forwarded-For", "1.1.1.1")
                 .when()
                 .get("/oauth2/token")
                 .then()
@@ -163,7 +314,7 @@ public class HydraOAuth2EndpointTest extends BaseTest {
                 .statusCode(200);
 
         HYDRA_MOCK_SERVER.verify(getRequestedFor(urlPathEqualTo("/oauth2/token"))
-                .withHeader(AUTHORIZATION_HEADER_NAME, equalTo("value")));
+                .withHeader(AUTHORIZATION_HEADER_NAME, equalTo("Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")));
     }
 
     @Test
