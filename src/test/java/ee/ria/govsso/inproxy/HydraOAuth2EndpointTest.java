@@ -165,4 +165,17 @@ public class HydraOAuth2EndpointTest extends BaseTest {
         HYDRA_MOCK_SERVER.verify(getRequestedFor(urlPathEqualTo("/oauth2/token"))
                 .withHeader(AUTHORIZATION_HEADER_NAME, equalTo("value")));
     }
+
+    @Test
+    void hydra_urlParametersContainSpecialCharacters_DoesNotEncodeValues() {
+        given()
+                // Rest Assured URL-encodes the query (i.e. "%3D" would be converted to "%253D"), unless we explicitly disable it.
+                .urlEncodingEnabled(false)
+                .queryParam("state", "FG6kE8S5SaU1%3D")
+                .queryParam("redirect_uri", "https://clienta.localhost:11443/login/oauth2/code/govsso")
+                .when()
+                .get("/oauth2/auth");
+
+        HYDRA_MOCK_SERVER.verify(getRequestedFor(urlEqualTo("/oauth2/auth?state=FG6kE8S5SaU1%3D&redirect_uri=https://clienta.localhost:11443/login/oauth2/code/govsso&prompt=consent")));
+    }
 }

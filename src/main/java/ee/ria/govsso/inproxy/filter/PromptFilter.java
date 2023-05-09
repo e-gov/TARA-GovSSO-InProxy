@@ -26,10 +26,16 @@ public class PromptFilter extends AbstractGatewayFilterFactory<PromptFilter.Conf
                     .getQueryParams();
             String[] promptKeyAndValue = getFirstPromptParameterIgnoringCase(queryParams);
 
+            // If query parameter "prompt" (case-insensitive) doesn't exist or it's value is empty,
+            // then add/replace query parameter "prompt=consent" to proxiable HTTP request.
             if (promptKeyAndValue == null || promptKeyAndValue[1] == null || promptKeyAndValue[1].isEmpty()) {
                 String promptParameterName = promptKeyAndValue == null ? PROMPT_PARAMETER_NAME : promptKeyAndValue[0];
-                URI newUri = UriComponentsBuilder.fromUri(exchange.getRequest().getURI())
-                        .replaceQueryParam(promptParameterName, PROMPT_PARAMETER_VALUE).build().toUri();
+                // We use UriComponents.toUriString() and create a new URI from that string, because using
+                // UriComponents.toUri() method directly would re-encode the already encoded URI parameters,
+                // causing "%3D" to be converted to "%253D", for example.
+                String newUriString = UriComponentsBuilder.fromUri(exchange.getRequest().getURI())
+                        .replaceQueryParam(promptParameterName, PROMPT_PARAMETER_VALUE).build().toUriString();
+                URI newUri = URI.create(newUriString);
                 ServerHttpRequest newRequest = exchange.getRequest().mutate()
                         .uri(newUri).build();
                 return chain.filter(exchange.mutate().request(newRequest).build());
