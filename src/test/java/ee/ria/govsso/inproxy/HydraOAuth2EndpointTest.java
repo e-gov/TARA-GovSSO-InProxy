@@ -45,7 +45,7 @@ public class HydraOAuth2EndpointTest extends BaseTest {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBodyFile("mock_responses/hydra_oauth2_sessions_logout.json")));
-        HYDRA_MOCK_SERVER.stubFor(get(urlPathEqualTo("/oauth2/auth/requests/login"))
+        HYDRA_MOCK_SERVER.stubFor(get(urlPathEqualTo("/oauth2/auth"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
@@ -232,13 +232,13 @@ public class HydraOAuth2EndpointTest extends BaseTest {
         given()
                 .queryParam("pRoMpT", "someValue")
                 .when()
-                .get("/oauth2/auth/requests/login")
+                .get("/oauth2/auth")
                 .then()
                 .assertThat()
                 .statusCode(200)
                 .body(equalToCompressingWhiteSpace(expectedResponse));
 
-        HYDRA_MOCK_SERVER.verify(getRequestedFor(urlEqualTo("/oauth2/auth/requests/login?pRoMpT=someValue"))
+        HYDRA_MOCK_SERVER.verify(getRequestedFor(urlEqualTo("/oauth2/auth?pRoMpT=someValue"))
                 .withoutHeader(TRACE_PARENT_PARAMETER_NAME));
     }
 
@@ -248,14 +248,14 @@ public class HydraOAuth2EndpointTest extends BaseTest {
         given()
                 .queryParam("pRoMpT", "")
                 .when()
-                .get("/oauth2/auth/requests/login")
+                .get("/oauth2/auth")
                 .then()
                 .assertThat()
                 .statusCode(200)
                 .body(equalToCompressingWhiteSpace(expectedResponse));
 
         HYDRA_MOCK_SERVER.verify(
-                getRequestedFor(urlEqualTo(String.format("/oauth2/auth/requests/login?pRoMpT=%s", PROMPT_PARAMETER_CONSENT_VALUE)))
+                getRequestedFor(urlEqualTo(String.format("/oauth2/auth?pRoMpT=%s", PROMPT_PARAMETER_CONSENT_VALUE)))
                 .withoutHeader(TRACE_PARENT_PARAMETER_NAME));
     }
 
@@ -264,14 +264,14 @@ public class HydraOAuth2EndpointTest extends BaseTest {
         String expectedResponse = TestUtils.getResourceAsString("__files/mock_responses/hydra_oauth2_requests_login.json");
         given()
                 .when()
-                .get("/oauth2/auth/requests/login")
+                .get("/oauth2/auth")
                 .then()
                 .assertThat()
                 .statusCode(200)
                 .body(equalToCompressingWhiteSpace(expectedResponse));
 
         HYDRA_MOCK_SERVER.verify(
-                getRequestedFor(urlEqualTo(String.format("/oauth2/auth/requests/login?%s=%s", PROMPT_PARAMETER_NAME, PROMPT_PARAMETER_CONSENT_VALUE)))
+                getRequestedFor(urlEqualTo(String.format("/oauth2/auth?%s=%s", PROMPT_PARAMETER_NAME, PROMPT_PARAMETER_CONSENT_VALUE)))
                 .withoutHeader(TRACE_PARENT_PARAMETER_NAME));
     }
 
@@ -282,13 +282,13 @@ public class HydraOAuth2EndpointTest extends BaseTest {
                 .queryParam("proMpT", "someValue")
                 .queryParam("tracePaReNt", TRACE_PARENT_PARAMETER_SAMPLE_VALUE)
                 .when()
-                .get("/oauth2/auth/requests/login")
+                .get("/oauth2/auth")
                 .then()
                 .assertThat()
                 .statusCode(200)
                 .body(equalToCompressingWhiteSpace(expectedResponse));
 
-        HYDRA_MOCK_SERVER.verify(getRequestedFor(urlPathEqualTo("/oauth2/auth/requests/login"))
+        HYDRA_MOCK_SERVER.verify(getRequestedFor(urlPathEqualTo("/oauth2/auth"))
                         .withQueryParam("proMpT", equalTo("someValue"))
                         .withQueryParam("tracePaReNt", equalTo(TRACE_PARENT_PARAMETER_SAMPLE_VALUE))
                         .withHeader(TRACE_PARENT_PARAMETER_NAME, equalTo(TRACE_PARENT_PARAMETER_SAMPLE_VALUE)));

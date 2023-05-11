@@ -53,7 +53,7 @@ spring:
         - id: oauth2-auth
           uri: ${govsso-inproxy.hydra.base-url}
           predicates:
-            - Path=/oauth2/auth/** # Also matches /oauth2/auth?param=value
+            - Path=/oauth2/auth
           filters:
             - TraceParentFilter
             - PromptFilter
