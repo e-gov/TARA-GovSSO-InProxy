@@ -68,8 +68,8 @@ GovSSO Incoming Proxy routes and filters inbound HTTP requests to Ory Hydra and 
 
 | Parameter | Mandatory | Description | Example |
 | :-------- | :-------- | :---------- | :------ |
-| `govsso-inproxy.hydra.base-url` | Yes | Ory Hydra public API base URL. | `https://hydra.localhost:14443/` |
-| `govsso-inproxy.session.base-url` | Yes | GovSSO Session public API base URL. | `https://session.localhost:15443/` |
+| `spring.cloud.discovery.client.simple.instances.hydra[0].uri` | Yes | A list of Ory Hydra public API base URL-s used for load balancing. | `https://hydra.localhost:14443/` |
+| `spring.cloud.discovery.client.simple.instances.session[0].uri` | Yes | A list of GovSSO Session public API base URL-s used for load balancing. | `https://session.localhost:15443/` |
 | `spring.cloud.gateway.httpclient.ssl.trustedX509Certificates` | Yes | Location of trust anchors (CA or end-entity certificates) for verifying TLS connections to Ory Hydra and GovSSO Session. | `classpath:path/to/certificate.crt` or `file:/path/to/certificate.crt` |
 
 ## Non-pom.xml Licenses

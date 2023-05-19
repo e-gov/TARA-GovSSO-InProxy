@@ -27,7 +27,7 @@ public class TokenRequestAllowedIpAddressesService {
 
     private final WebClient webclient;
 
-    @Scheduled(fixedRateString = "${govsso-inproxy.allowed-ips.refresh-allowed-ips-interval-in-milliseconds:60000}", initialDelay = 60000)
+    @Scheduled(fixedRateString = "${govsso-inproxy.allowed-ips.refresh-allowed-ips-interval-in-milliseconds:60000}")
     public void updateAllowedIpsTask() {
 
         String uri = adminConfigurationProperties.baseUrl() + IP_ADDRESSES_URL;

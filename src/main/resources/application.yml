@@ -4,10 +4,6 @@ govsso-inproxy:
     tls:
       trust-store: classpath:inproxy.localhost.admin.truststore.p12
       trust-store-password: changeit
-  hydra:
-    base-url: ${GOVSSO_HYDRA_URL:https://hydra.localhost:8443}
-  session:
-    base-url: ${GOVSSO_SESSION_URL:https://session.localhost:15443}
 
 management:
   endpoint:
@@ -44,6 +40,26 @@ spring:
   main:
     banner-mode: off
   cloud:
+    discovery:
+      client:
+        simple:
+          instances:
+            hydra:
+              - uri: https://hydra.localhost:14442/
+            session:
+              - uri: https://session.localhost:15442/
+    loadbalancer:
+      health-check:
+        path:
+          hydra: /health/ready
+          session: /actuator/health/readiness
+        interval: 5s
+      eager-load:
+        clients:
+          - hydra
+          - session
+      cache:
+        enabled: false
     gateway:
       httpclient:
         ssl:
@@ -55,30 +71,30 @@ spring:
         - RemoveRequestHeader=elastic-apm-traceparent
       routes:
         - id: hydra-well-known
-          uri: ${govsso-inproxy.hydra.base-url}
+          uri: lb://hydra
           predicates:
             - Path=/.well-known/openid-configuration,/.well-known/jwks.json
         - id: oauth2-auth
-          uri: ${govsso-inproxy.hydra.base-url}
+          uri: lb://hydra
           predicates:
             - Path=/oauth2/auth
           filters:
             - TraceParentFilter
             - PromptFilter
         - id: oauth2-sessions-logout
-          uri: ${govsso-inproxy.hydra.base-url}
+          uri: lb://hydra
           predicates:
             - Path=/oauth2/sessions/logout
           filters:
             - TraceParentFilter
         - id: oauth2-token
-          uri: ${govsso-inproxy.hydra.base-url}
+          uri: lb://hydra
           predicates:
             - Path=/oauth2/token
           filters:
             - IpFilter
         - id: admin
-          uri: ${govsso-inproxy.session.base-url}
+          uri: lb://session
           predicates:
             - Path=/admin**,/admin/**
           filters:
@@ -91,6 +107,6 @@ spring:
             - Path=/
         - id: default
           order: 9999 # Very low priority compared to the other routes (order value is 0 by default)
-          uri: ${govsso-inproxy.session.base-url}
+          uri: lb://session
           predicates:
             - Path=/**

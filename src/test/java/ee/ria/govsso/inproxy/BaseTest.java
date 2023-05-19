@@ -11,6 +11,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static io.restassured.config.RedirectConfig.redirectConfig;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
@@ -49,6 +53,7 @@ public abstract class BaseTest extends BaseTestLoggingAssertion {
     @BeforeAll
     static void setUpAll() {
         configureRestAssured();
+        createStubsForScheduledTasks();
         HYDRA_MOCK_SERVER.start();
         SESSION_MOCK_SERVER.start();
         ADMIN_MOCK_SERVER.start();
@@ -65,5 +70,18 @@ public abstract class BaseTest extends BaseTestLoggingAssertion {
         HYDRA_MOCK_SERVER.resetAll();
         SESSION_MOCK_SERVER.resetAll();
         ADMIN_MOCK_SERVER.resetAll();
+        createStubsForScheduledTasks();
+    }
+
+    private static void createStubsForScheduledTasks() {
+        SESSION_MOCK_SERVER.stubFor(get(urlEqualTo("/actuator/health/readiness"))
+                .willReturn(aResponse()
+                        .withStatus(200)));
+        HYDRA_MOCK_SERVER.stubFor(get(urlEqualTo("/health/ready"))
+                .willReturn(aResponse()
+                        .withStatus(200)));
+        ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
+                .willReturn(aResponse()
+                        .withStatus(200)));
     }
 }
