@@ -24,6 +24,9 @@ management:
       enabled: true
 
 server:
+  error:
+    whitelabel:
+      enabled: false
   port: 13443
   forward-headers-strategy: NATIVE # Under main this cannot be enabled by default, because docker-compose.yml doesn't have another proxy in front of inproxy that would always set X-Forwarded-For header. X-Forwarded-For value that could be set outside of your own infrastructure, cannot be trusted.
   ssl:

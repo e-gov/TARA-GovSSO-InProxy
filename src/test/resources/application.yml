@@ -24,6 +24,9 @@ management:
       enabled: true
 
 server:
+  error:
+    whitelabel:
+      enabled: false
   forward-headers-strategy: NATIVE
 
 spring:
