@@ -72,6 +72,8 @@ spring:
         - RemoveRequestHeader=traceparent
         - RemoveRequestHeader=tracestate
         - RemoveRequestHeader=elastic-apm-traceparent
+      forwarded:
+        enabled: false
       routes:
         - id: hydra-well-known
           uri: lb://hydra
@@ -113,3 +115,5 @@ spring:
           uri: lb://session
           predicates:
             - Path=/**
+      x-forwarded:
+        enabled: false
