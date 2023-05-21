@@ -1,18 +1,16 @@
 package ee.ria.govsso.inproxy.configuration.properties;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.ConstructorBinding;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.core.io.Resource;
 import org.springframework.validation.annotation.Validated;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.net.URL;
 
 @Validated
-@ConstructorBinding
 @ConfigurationProperties(prefix = "govsso-inproxy.admin")
 public record AdminConfigurationProperties(
         @NotNull
@@ -22,7 +20,6 @@ public record AdminConfigurationProperties(
         AdminTlsConfigurationProperties tls) {
 
     @Validated
-    @ConstructorBinding
     @ConfigurationProperties(prefix = "govsso-inproxy.admin.tls")
     public record AdminTlsConfigurationProperties(
             @NotNull
