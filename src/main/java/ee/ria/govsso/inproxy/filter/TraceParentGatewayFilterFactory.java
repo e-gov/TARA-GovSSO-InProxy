@@ -6,11 +6,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
 
 @Component
-public class TraceParentFilter extends AbstractGatewayFilterFactory<TraceParentFilter.Config> {
+public class TraceParentGatewayFilterFactory extends AbstractGatewayFilterFactory<TraceParentGatewayFilterFactory.Config> {
 
     private static final String TRACE_PARENT_PARAMETER_NAME = "traceparent";
 
-    public TraceParentFilter() {
+    public TraceParentGatewayFilterFactory() {
         super(Config.class);
     }
 

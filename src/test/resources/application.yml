@@ -76,20 +76,20 @@ spring:
           predicates:
             - Path=/oauth2/auth
           filters:
-            - TraceParentFilter
-            - PromptFilter
+            - TraceParent
+            - Prompt
         - id: oauth2-sessions-logout
           uri: lb://hydra
           predicates:
             - Path=/oauth2/sessions/logout
           filters:
-            - TraceParentFilter
+            - TraceParent
         - id: oauth2-token
           uri: lb://hydra
           predicates:
             - Path=/oauth2/token
           filters:
-            - IpFilter
+            - IpAddress
         - id: admin
           uri: lb://session
           predicates:

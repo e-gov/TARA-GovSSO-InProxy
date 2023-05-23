@@ -10,12 +10,12 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 
 @Component
-public class PromptFilter extends AbstractGatewayFilterFactory<PromptFilter.Config> {
+public class PromptGatewayFilterFactory extends AbstractGatewayFilterFactory<PromptGatewayFilterFactory.Config> {
 
     private static final String PROMPT_PARAMETER_NAME = "prompt";
     private static final String PROMPT_PARAMETER_VALUE = "consent";
 
-    public PromptFilter() {
+    public PromptGatewayFilterFactory() {
         super(Config.class);
     }
 

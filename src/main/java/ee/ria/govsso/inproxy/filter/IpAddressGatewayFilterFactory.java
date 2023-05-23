@@ -22,15 +22,15 @@ import java.util.Base64;
 import java.util.Map;
 
 @Component
-public class IpFilter extends AbstractGatewayFilterFactory<IpFilter.Config> {
+public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<IpAddressGatewayFilterFactory.Config> {
 
     public static final String AUTHENTICATION_SCHEME_BASIC = "basic";
-    private static Jackson2JsonEncoder jackson2JsonEncoder;
+    private Jackson2JsonEncoder jackson2JsonEncoder;
 
     @Autowired
     private TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService;
 
-    public IpFilter(ObjectMapper objectMapper)  {
+    public IpAddressGatewayFilterFactory(ObjectMapper objectMapper)  {
         super(Config.class);
         jackson2JsonEncoder = new Jackson2JsonEncoder(objectMapper);
     }

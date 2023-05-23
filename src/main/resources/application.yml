@@ -28,7 +28,7 @@ server:
     whitelabel:
       enabled: false
   port: 13443
-  forward-headers-strategy: NATIVE # Under main this cannot be enabled by default, because docker-compose.yml doesn't have another proxy in front of inproxy that would always set X-Forwarded-For header. X-Forwarded-For value that could be set outside of your own infrastructure, cannot be trusted.
+  forward-headers-strategy: NONE # Under main this cannot be enabled by default, because docker-compose.yml doesn't have another proxy in front of inproxy that would always set X-Forwarded-For header. X-Forwarded-For value that could be set outside of your own infrastructure, cannot be trusted.
   ssl:
     enabled: true
     enabled-protocols: TLSv1.3
@@ -84,20 +84,20 @@ spring:
           predicates:
             - Path=/oauth2/auth
           filters:
-            - TraceParentFilter
-            - PromptFilter
+            - TraceParent
+            - Prompt
         - id: oauth2-sessions-logout
           uri: lb://hydra
           predicates:
             - Path=/oauth2/sessions/logout
           filters:
-            - TraceParentFilter
+            - TraceParent
         - id: oauth2-token
           uri: lb://hydra
           predicates:
             - Path=/oauth2/token
           filters:
-            - IpFilter
+            - IpAddress
         - id: admin
           uri: lb://session
           predicates:

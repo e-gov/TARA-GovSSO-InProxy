@@ -38,7 +38,8 @@ class TokenRequestAllowedIpAddressesServiceTest extends BaseTest {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")));
 
         tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
-        tokenRequestAllowedIpAddressesService.isTokenRequestAllowed("client-a", "1.1.1.1");
+        boolean isTokenRequestAllowed = tokenRequestAllowedIpAddressesService.isTokenRequestAllowed("client-a", "1.1.1.1");
+        assertThat(isTokenRequestAllowed, is(false));
     }
 
 }

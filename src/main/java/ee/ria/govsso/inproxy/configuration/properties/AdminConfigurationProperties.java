@@ -16,7 +16,7 @@ public record AdminConfigurationProperties(
         @NotNull
         URL baseUrl,
         @Min(value = 1000) @DefaultValue("60000")
-        int refreshTokenRequestAllowedIpAddressesIntervalInMilliseconds,
+        int tokenRequestAllowedIpAddressesRefreshIntervalInMilliseconds,
         AdminTlsConfigurationProperties tls) {
 
     @Validated

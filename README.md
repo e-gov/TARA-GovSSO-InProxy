@@ -60,6 +60,7 @@ GovSSO Incoming Proxy routes and filters inbound HTTP requests to Ory Hydra and 
 | Parameter | Mandatory | Description | Example |
 | :-------- | :-------- | :---------- | :------ |
 | `govsso-inproxy.admin.base-url` | Yes | GovSSO Admin administrative API base URL. | `https://admin.localhost:17443/` |
+| `govsso-inproxy.admin.token-request-allowed-ip-addresses-refresh-interval-in-milliseconds` | No | Interval for the scheduled task that requests allowed IP addresses from GovSSO Admin. If not provided, defaults to `60000`. | `60000` |
 | `govsso-inproxy.admin.tls.trust-store` | Yes | Location of trust-store, containing trust anchors (CA or end-entity certificates) for verifying TLS connections to GovSSO Admin. | `classpath:path/to/trust-store.p12` or `file:/path/to/trust-store.p12` |
 | `govsso-inproxy.admin.tls.trust-store-password` | Yes | Trust-store password. | `changeit` |
 | `govsso-inproxy.admin.tls.trust-store-type` | No | Trust-store type. If not provided, defaults to `PKCS12`. | `PKCS12` |
