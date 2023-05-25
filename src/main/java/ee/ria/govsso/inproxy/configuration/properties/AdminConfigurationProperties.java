@@ -15,6 +15,8 @@ import java.net.URL;
 public record AdminConfigurationProperties(
         @NotNull
         URL baseUrl,
+        @NotBlank
+        String tokenRequestAllowedIpAddressesStoragePath,
         @Min(value = 1000) @DefaultValue("60000")
         int tokenRequestAllowedIpAddressesRefreshIntervalInMilliseconds,
         AdminTlsConfigurationProperties tls) {

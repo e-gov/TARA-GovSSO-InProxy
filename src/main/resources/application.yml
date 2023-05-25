@@ -1,6 +1,7 @@
 govsso-inproxy:
   admin:
     base-url: https://admin.localhost:443
+    token-request-allowed-ip-addresses-storage-path: ipaddresses
     tls:
       trust-store: classpath:inproxy.localhost.admin.truststore.p12
       trust-store-password: changeit
