@@ -1,6 +1,6 @@
 govsso-inproxy:
   admin:
-    base-url: https://admin.localhost:443
+    base-url: https://admin.localhost:17443/
     token-request-allowed-ip-addresses-storage-path: ipaddresses
     tls:
       trust-store: classpath:inproxy.localhost.admin.truststore.p12
@@ -49,9 +49,9 @@ spring:
         simple:
           instances:
             hydra:
-              - uri: https://hydra.localhost:14442/
+              - uri: https://hydra.localhost:14443/
             session:
-              - uri: https://session.localhost:15442/
+              - uri: https://session.localhost:15443/
     loadbalancer:
       health-check:
         path:
