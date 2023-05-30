@@ -48,7 +48,7 @@ class TokenRequestAllowedIpAddressesServiceTest extends BaseTest {
     @Test
     void admin_TokenRequestAllowedIpAddressesRequestRespondsWith404_IpAddressesFileIsNotChanged() throws IOException {
         createTokenRequestAllowedIpAddressesFile();
-
+        tokenRequestAllowedIpAddressesService.loadIpAddressesFromFileIgnoringExceptions();
         ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
                 .willReturn(aResponse()
                         .withStatus(404)));
@@ -56,14 +56,15 @@ class TokenRequestAllowedIpAddressesServiceTest extends BaseTest {
         tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
 
         assertErrorIsLogged("Unable to update the list of allowed IP-address ranges: 404 Not Found from GET https://admin.localhost:17442/clients/tokenrequestallowedipaddresses");
+        boolean isTokenRequestAllowed = tokenRequestAllowedIpAddressesService.isTokenRequestAllowed("client-from-file", "1.1.1.1");
         Map<String, List<String>> tokenRequestAllowedIpAddressesFromFile = objectMapper.readValue(new File(adminConfigurationProperties.tokenRequestAllowedIpAddressesStoragePath()), new TypeReference<>(){});
+        assertThat(isTokenRequestAllowed, is(true));
         assertThat(tokenRequestAllowedIpAddressesFromFile.get("client-from-file").get(0), equalTo("1.1.1.1"));
     }
 
     @Test
     void admin_TokenRequestAllowedIpAddressesRequestRespondsWithEmptyBody_EmptyResponseIsStoredInMapAndSavedToFile() throws IOException {
         createTokenRequestAllowedIpAddressesFile();
-
         ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -82,7 +83,7 @@ class TokenRequestAllowedIpAddressesServiceTest extends BaseTest {
     void admin_AllowedIpAddressesMapIsSetFromFile_TokenRequestIsAllowed() throws IOException {
         createTokenRequestAllowedIpAddressesFile();
 
-        tokenRequestAllowedIpAddressesService.initializeTokenRequestAllowedIpAddressesFromFile();
+        tokenRequestAllowedIpAddressesService.loadIpAddressesFromFileIgnoringExceptions();
 
         boolean isTokenRequestAllowed = tokenRequestAllowedIpAddressesService.isTokenRequestAllowed("client-from-file", "1.1.1.1");
         assertThat(isTokenRequestAllowed, is(true));
