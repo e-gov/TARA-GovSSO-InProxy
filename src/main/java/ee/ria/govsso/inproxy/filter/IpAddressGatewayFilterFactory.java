@@ -2,7 +2,6 @@ package ee.ria.govsso.inproxy.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ee.ria.govsso.inproxy.service.TokenRequestAllowedIpAddressesService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
@@ -25,13 +24,14 @@ import java.util.Map;
 public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<IpAddressGatewayFilterFactory.Config> {
 
     public static final String AUTHENTICATION_SCHEME_BASIC = "basic";
-    private Jackson2JsonEncoder jackson2JsonEncoder;
 
-    @Autowired
-    private TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService;
+    private final TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService;
+    private final Jackson2JsonEncoder jackson2JsonEncoder;
 
-    public IpAddressGatewayFilterFactory(ObjectMapper objectMapper)  {
+    public IpAddressGatewayFilterFactory(TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService,
+                                         ObjectMapper objectMapper) {
         super(Config.class);
+        this.tokenRequestAllowedIpAddressesService = tokenRequestAllowedIpAddressesService;
         jackson2JsonEncoder = new Jackson2JsonEncoder(objectMapper);
     }
 
