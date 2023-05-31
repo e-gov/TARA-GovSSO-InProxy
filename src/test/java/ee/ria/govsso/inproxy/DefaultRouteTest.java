@@ -4,6 +4,8 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import org.junit.jupiter.api.Test;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
@@ -39,5 +41,7 @@ public class DefaultRouteTest extends BaseTest{
                 .withoutHeader(HEADER_ELASTIC_APM_TRACEPARENT)
                 .withHeader("customHeader", WireMock.equalTo("custom value"))
                 .withHeader("user-agent", WireMock.equalTo("Mozilla/5.0")));
+        SESSION_MOCK_SERVER.verify(1, anyRequestedFor(anyUrl()));
+        HYDRA_MOCK_SERVER.verify(0, anyRequestedFor(anyUrl()));
     }
 }
