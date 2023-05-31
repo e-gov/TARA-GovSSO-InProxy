@@ -91,5 +91,6 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
         }
     }
 
-    public static class Config {}
+    public static class Config {
+    }
 }

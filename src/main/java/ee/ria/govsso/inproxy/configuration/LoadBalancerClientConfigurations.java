@@ -8,5 +8,4 @@ import org.springframework.cloud.loadbalancer.annotation.LoadBalancerClients;
         @LoadBalancerClient(value = "session", configuration = LoadBalancingConfiguration.class)
 })
 public class LoadBalancerClientConfigurations {
-
 }

@@ -14,13 +14,13 @@ GovSSO Incoming Proxy routes and filters inbound HTTP requests to Ory Hydra and 
    services.
 2. If you have generated new TLS certificates (doable at project GOVSSO-Session) after the last copy, then:
     * copy-replace the following files to `src/main/resources`:
-      - `GOVSSO-Session/local/tls/govsso-ca/govsso-ca.localhost.crt`
-      - `GOVSSO-Session/local/tls/inproxy/inproxy.localhost.admin.truststore.p12`
-      - `GOVSSO-Session/local/tls/inproxy/inproxy.localhost.keystore.p12`
+        - `GOVSSO-Session/local/tls/govsso-ca/govsso-ca.localhost.crt`
+        - `GOVSSO-Session/local/tls/inproxy/inproxy.localhost.admin.truststore.p12`
+        - `GOVSSO-Session/local/tls/inproxy/inproxy.localhost.keystore.p12`
     * copy-replace the following files to `src/test/resources`:
-      - `GOVSSO-Session/local/tls/admin/admin.localhost.keystore.p12`
-      - `GOVSSO-Session/local/tls/hydra/hydra.localhost.keystore.p12`
-      - `GOVSSO-Session/local/tls/session/session.localhost.keystore.p12`
+        - `GOVSSO-Session/local/tls/admin/admin.localhost.keystore.p12`
+        - `GOVSSO-Session/local/tls/hydra/hydra.localhost.keystore.p12`
+        - `GOVSSO-Session/local/tls/session/session.localhost.keystore.p12`
 3. Add `127.0.0.1 admin.localhost hydra.localhost session.localhost` line to `hosts` file. This is needed only for
    requests originating from GOVSSO-InProxy when it's running locally (not in Docker Compose). It's not needed for web
    browsers as popular browsers already have built-in support for resolving `*.localhost` subdomains.

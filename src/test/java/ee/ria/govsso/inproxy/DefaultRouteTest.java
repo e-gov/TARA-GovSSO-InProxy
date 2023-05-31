@@ -12,7 +12,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static io.restassured.RestAssured.given;
 
-public class DefaultRouteTest extends BaseTest{
+public class DefaultRouteTest extends BaseTest {
 
     private static final String HEADER_TRACEPARENT = "traceparent";
     private static final String HEADER_TRACESTATE = "tracestate";

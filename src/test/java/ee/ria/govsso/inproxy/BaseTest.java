@@ -89,7 +89,7 @@ public abstract class BaseTest extends BaseTestLoggingAssertion {
     }
 
     @AfterAll
-    public static void cleanUp(){
+    public static void cleanUp() {
         new File("target/ipaddresses").delete();
     }
 }

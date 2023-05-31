@@ -38,5 +38,6 @@ public class TraceParentGatewayFilterFactory extends AbstractGatewayFilterFactor
         return null;
     }
 
-    public static class Config {}
+    public static class Config {
+    }
 }

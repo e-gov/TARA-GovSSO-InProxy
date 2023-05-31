@@ -53,5 +53,6 @@ public class PromptGatewayFilterFactory extends AbstractGatewayFilterFactory<Pro
         return null;
     }
 
-    public static class Config {}
+    public static class Config {
+    }
 }

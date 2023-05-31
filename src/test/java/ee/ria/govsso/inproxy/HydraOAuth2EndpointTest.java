@@ -117,8 +117,9 @@ public class HydraOAuth2EndpointTest extends BaseTest {
         ADMIN_MOCK_SERVER.verify(exactly(0), postRequestedFor(urlEqualTo("/oauth2/token")));
     }
 
+    //TODO Add more tests for odd authorization header cases
     @ParameterizedTest
-    @ValueSource(strings = {"Basic", ""}) //TODO Add more tests for odd authorization header cases
+    @ValueSource(strings = {"Basic", ""})
     void hydra_oAuthTokenRequestIncorrectAuthorizationHeader_Returns400Error(String authorizationHeader) {
 
         given()
@@ -256,7 +257,7 @@ public class HydraOAuth2EndpointTest extends BaseTest {
 
         HYDRA_MOCK_SERVER.verify(
                 getRequestedFor(urlEqualTo(String.format("/oauth2/auth?pRoMpT=%s", PROMPT_PARAMETER_CONSENT_VALUE)))
-                .withoutHeader(TRACE_PARENT_PARAMETER_NAME));
+                        .withoutHeader(TRACE_PARENT_PARAMETER_NAME));
     }
 
     @Test
@@ -272,7 +273,7 @@ public class HydraOAuth2EndpointTest extends BaseTest {
 
         HYDRA_MOCK_SERVER.verify(
                 getRequestedFor(urlEqualTo(String.format("/oauth2/auth?%s=%s", PROMPT_PARAMETER_NAME, PROMPT_PARAMETER_CONSENT_VALUE)))
-                .withoutHeader(TRACE_PARENT_PARAMETER_NAME));
+                        .withoutHeader(TRACE_PARENT_PARAMETER_NAME));
     }
 
     @Test
@@ -289,9 +290,9 @@ public class HydraOAuth2EndpointTest extends BaseTest {
                 .body(equalToCompressingWhiteSpace(expectedResponse));
 
         HYDRA_MOCK_SERVER.verify(getRequestedFor(urlPathEqualTo("/oauth2/auth"))
-                        .withQueryParam("proMpT", equalTo("someValue"))
-                        .withQueryParam("tracePaReNt", equalTo(TRACE_PARENT_PARAMETER_SAMPLE_VALUE))
-                        .withHeader(TRACE_PARENT_PARAMETER_NAME, equalTo(TRACE_PARENT_PARAMETER_SAMPLE_VALUE)));
+                .withQueryParam("proMpT", equalTo("someValue"))
+                .withQueryParam("tracePaReNt", equalTo(TRACE_PARENT_PARAMETER_SAMPLE_VALUE))
+                .withHeader(TRACE_PARENT_PARAMETER_NAME, equalTo(TRACE_PARENT_PARAMETER_SAMPLE_VALUE)));
     }
 
     @Test

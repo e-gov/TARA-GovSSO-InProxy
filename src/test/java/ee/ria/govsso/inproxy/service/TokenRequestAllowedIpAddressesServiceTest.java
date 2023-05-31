@@ -40,7 +40,8 @@ class TokenRequestAllowedIpAddressesServiceTest extends BaseTest {
         tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
 
         boolean isTokenRequestAllowed = tokenRequestAllowedIpAddressesService.isTokenRequestAllowed("client-a", "127.0.0.1");
-        Map<String, List<String>> tokenRequestAllowedIpAddresses = objectMapper.readValue(new File(adminConfigurationProperties.tokenRequestAllowedIpAddressesStoragePath()), new TypeReference<>(){});
+        Map<String, List<String>> tokenRequestAllowedIpAddresses = objectMapper.readValue(new File(adminConfigurationProperties.tokenRequestAllowedIpAddressesStoragePath()), new TypeReference<>() {
+        });
         assertThat(isTokenRequestAllowed, is(true));
         assertThat(tokenRequestAllowedIpAddresses.get("client-a").get(0), equalTo("127.0.0.1"));
     }
@@ -57,7 +58,8 @@ class TokenRequestAllowedIpAddressesServiceTest extends BaseTest {
 
         assertErrorIsLogged("Unable to update the list of allowed IP-address ranges: 404 Not Found from GET https://admin.localhost:17442/clients/tokenrequestallowedipaddresses");
         boolean isTokenRequestAllowed = tokenRequestAllowedIpAddressesService.isTokenRequestAllowed("client-from-file", "1.1.1.1");
-        Map<String, List<String>> tokenRequestAllowedIpAddressesFromFile = objectMapper.readValue(new File(adminConfigurationProperties.tokenRequestAllowedIpAddressesStoragePath()), new TypeReference<>(){});
+        Map<String, List<String>> tokenRequestAllowedIpAddressesFromFile = objectMapper.readValue(new File(adminConfigurationProperties.tokenRequestAllowedIpAddressesStoragePath()), new TypeReference<>() {
+        });
         assertThat(isTokenRequestAllowed, is(true));
         assertThat(tokenRequestAllowedIpAddressesFromFile.get("client-from-file").get(0), equalTo("1.1.1.1"));
     }
@@ -73,7 +75,8 @@ class TokenRequestAllowedIpAddressesServiceTest extends BaseTest {
         tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
 
         boolean isTokenRequestAllowed = tokenRequestAllowedIpAddressesService.isTokenRequestAllowed("client-from-file", "1.1.1.1");
-        Map<String, List<String>> tokenRequestAllowedIpAddressesFromFile = objectMapper.readValue(new File(adminConfigurationProperties.tokenRequestAllowedIpAddressesStoragePath()), new TypeReference<>(){});
+        Map<String, List<String>> tokenRequestAllowedIpAddressesFromFile = objectMapper.readValue(new File(adminConfigurationProperties.tokenRequestAllowedIpAddressesStoragePath()), new TypeReference<>() {
+        });
         assertThat(tokenRequestAllowedIpAddressesFromFile.isEmpty(), is(true));
         assertThat(tokenRequestAllowedIpAddressesService.tokenRequestAllowedIpAddresses.isEmpty(), is(true));
         assertThat(isTokenRequestAllowed, is(false));
@@ -94,5 +97,4 @@ class TokenRequestAllowedIpAddressesServiceTest extends BaseTest {
         tokenRequestAllowedIpAddresses.put("client-from-file", List.of("1.1.1.1"));
         objectMapper.writeValue(new File(adminConfigurationProperties.tokenRequestAllowedIpAddressesStoragePath()), tokenRequestAllowedIpAddresses);
     }
-
 }
