@@ -4,7 +4,6 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
-import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.AfterEach;
@@ -29,8 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.slf4j.Logger.ROOT_LOGGER_NAME;
 import static org.slf4j.LoggerFactory.getLogger;
 
-@Slf4j
-class BaseTestLoggingAssertion {
+public class BaseTestLoggingAssertion {
 
     private static ListAppender<ILoggingEvent> mockLogAppender;
 

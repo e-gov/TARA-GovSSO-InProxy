@@ -3,10 +3,13 @@ package ee.ria.govsso.inproxy.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ee.ria.govsso.inproxy.configuration.properties.AdminConfigurationProperties;
+import ee.ria.govsso.inproxy.logging.ClientRequestLogger;
 import ee.ria.govsso.inproxy.util.ExceptionUtil;
 import inet.ipaddr.IPAddressString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -19,6 +22,8 @@ import java.util.Map;
 @Slf4j
 @Service
 public class TokenRequestAllowedIpAddressesService {
+
+    private final ClientRequestLogger adminRequestLogger;
     private final AdminConfigurationProperties adminConfigurationProperties;
     private final ObjectMapper objectMapper;
     private final WebClient webclient;
@@ -30,9 +35,11 @@ public class TokenRequestAllowedIpAddressesService {
 
     public Map<String, List<String>> tokenRequestAllowedIpAddresses = Map.of();
 
-    public TokenRequestAllowedIpAddressesService(AdminConfigurationProperties adminConfigurationProperties,
+    public TokenRequestAllowedIpAddressesService(ClientRequestLogger adminRequestLogger,
+                                                 AdminConfigurationProperties adminConfigurationProperties,
                                                  ObjectMapper objectMapper,
                                                  WebClient webclient) {
+        this.adminRequestLogger = adminRequestLogger;
         this.adminConfigurationProperties = adminConfigurationProperties;
         this.objectMapper = objectMapper;
         this.webclient = webclient;
@@ -86,6 +93,7 @@ public class TokenRequestAllowedIpAddressesService {
 
     private void queryIpAddressesFromAdminService() {
         String uri = adminConfigurationProperties.baseUrl() + IP_ADDRESSES_URL;
+        adminRequestLogger.logRequest(uri, HttpMethod.GET);
         tokenRequestAllowedIpAddresses = webclient.get()
                 .uri(uri)
                 .accept(MediaType.APPLICATION_JSON)
@@ -93,6 +101,7 @@ public class TokenRequestAllowedIpAddressesService {
                 .bodyToMono(PARAMETERIZED_TYPE_REFERENCE)
                 .defaultIfEmpty(Map.of())
                 .block();
+        adminRequestLogger.logResponse(HttpStatus.OK.value(), tokenRequestAllowedIpAddresses);
     }
 
     private void saveIpAddressesToFile() {

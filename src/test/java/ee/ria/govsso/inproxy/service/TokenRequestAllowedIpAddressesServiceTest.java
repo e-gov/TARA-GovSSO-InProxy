@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static ch.qos.logback.classic.Level.INFO;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
@@ -44,6 +45,8 @@ class TokenRequestAllowedIpAddressesServiceTest extends BaseTest {
         });
         assertThat(isTokenRequestAllowed, is(true));
         assertThat(tokenRequestAllowedIpAddresses.get("client-a").get(0), equalTo("127.0.0.1"));
+        assertMessageWithMarkerIsLoggedOnce(TokenRequestAllowedIpAddressesService.class, INFO, "ADMIN request", "http.request.method=GET, url.full=https://admin.localhost:17442//clients/tokenrequestallowedipaddresses");
+        assertMessageWithMarkerIsLoggedOnce(TokenRequestAllowedIpAddressesService.class, INFO, "ADMIN response: 200", "http.response.status_code=200, http.response.body.content={\"client-a\":[\"127.0.0.1\"]}");
     }
 
     @Test
@@ -62,6 +65,8 @@ class TokenRequestAllowedIpAddressesServiceTest extends BaseTest {
         });
         assertThat(isTokenRequestAllowed, is(true));
         assertThat(tokenRequestAllowedIpAddressesFromFile.get("client-from-file").get(0), equalTo("1.1.1.1"));
+        assertMessageWithMarkerIsLoggedOnce(TokenRequestAllowedIpAddressesService.class, INFO, "ADMIN request", "http.request.method=GET, url.full=https://admin.localhost:17442//clients/tokenrequestallowedipaddresses");
+        assertMessageWithMarkerIsLoggedOnce(TokenRequestAllowedIpAddressesService.class, INFO, "ADMIN response: 404", "http.response.status_code=404, http.response.body.content=\"\"");
     }
 
     @Test
@@ -80,6 +85,8 @@ class TokenRequestAllowedIpAddressesServiceTest extends BaseTest {
         assertThat(tokenRequestAllowedIpAddressesFromFile.isEmpty(), is(true));
         assertThat(tokenRequestAllowedIpAddressesService.tokenRequestAllowedIpAddresses.isEmpty(), is(true));
         assertThat(isTokenRequestAllowed, is(false));
+        assertMessageWithMarkerIsLoggedOnce(TokenRequestAllowedIpAddressesService.class, INFO, "ADMIN request", "http.request.method=GET, url.full=https://admin.localhost:17442//clients/tokenrequestallowedipaddresses");
+        assertMessageWithMarkerIsLoggedOnce(TokenRequestAllowedIpAddressesService.class, INFO, "ADMIN response: 200", "http.response.status_code=200, http.response.body.content={}");
     }
 
     @Test
@@ -90,6 +97,7 @@ class TokenRequestAllowedIpAddressesServiceTest extends BaseTest {
 
         boolean isTokenRequestAllowed = tokenRequestAllowedIpAddressesService.isTokenRequestAllowed("client-from-file", "1.1.1.1");
         assertThat(isTokenRequestAllowed, is(true));
+        assertMessageIsNotLogged(TokenRequestAllowedIpAddressesService.class, "ADMIN request");
     }
 
     private void createTokenRequestAllowedIpAddressesFile() throws IOException {
