@@ -49,9 +49,11 @@ class WebClientConfiguration {
     @Bean
     @SneakyThrows
     KeyStore adminTrustStore(AdminConfigurationProperties.AdminTlsConfigurationProperties tlsProperties) {
-        InputStream trustStoreFile = tlsProperties.trustStore().getInputStream();
         KeyStore trustStore = KeyStore.getInstance(tlsProperties.trustStoreType());
-        trustStore.load(trustStoreFile, tlsProperties.trustStorePassword().toCharArray());
+        char[] password = tlsProperties.trustStorePassword().toCharArray();
+        try (InputStream trustStoreFile = tlsProperties.trustStore().getInputStream()) {
+            trustStore.load(trustStoreFile, password);
+        }
         return trustStore;
     }
 
