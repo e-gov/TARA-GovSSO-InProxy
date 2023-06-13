@@ -6,6 +6,7 @@ import ee.ria.govsso.inproxy.configuration.properties.AdminConfigurationProperti
 import ee.ria.govsso.inproxy.logging.ClientRequestLogger;
 import ee.ria.govsso.inproxy.util.ExceptionUtil;
 import inet.ipaddr.IPAddressString;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -33,7 +34,9 @@ public class TokenRequestAllowedIpAddressesService {
     private static final ParameterizedTypeReference<Map<String, List<String>>> PARAMETERIZED_TYPE_REFERENCE = new ParameterizedTypeReference<>() {
     };
 
-    public Map<String, List<String>> tokenRequestAllowedIpAddresses = Map.of();
+    protected Map<String, List<String>> tokenRequestAllowedIpAddresses = Map.of();
+    @Getter
+    private boolean lastRequestToAdminSuccessful;
 
     public TokenRequestAllowedIpAddressesService(ClientRequestLogger adminRequestLogger,
                                                  AdminConfigurationProperties adminConfigurationProperties,
@@ -92,16 +95,22 @@ public class TokenRequestAllowedIpAddressesService {
     }
 
     private void queryIpAddressesFromAdminService() {
-        String uri = adminConfigurationProperties.baseUrl() + IP_ADDRESSES_URL;
-        adminRequestLogger.logRequest(uri, HttpMethod.GET);
-        tokenRequestAllowedIpAddresses = webclient.get()
-                .uri(uri)
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(PARAMETERIZED_TYPE_REFERENCE)
-                .defaultIfEmpty(Map.of())
-                .block();
-        adminRequestLogger.logResponse(HttpStatus.OK.value(), tokenRequestAllowedIpAddresses);
+        try {
+            String uri = adminConfigurationProperties.baseUrl() + IP_ADDRESSES_URL;
+            adminRequestLogger.logRequest(uri, HttpMethod.GET);
+            tokenRequestAllowedIpAddresses = webclient.get()
+                    .uri(uri)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .retrieve()
+                    .bodyToMono(PARAMETERIZED_TYPE_REFERENCE)
+                    .defaultIfEmpty(Map.of())
+                    .block();
+            adminRequestLogger.logResponse(HttpStatus.OK.value(), tokenRequestAllowedIpAddresses);
+            lastRequestToAdminSuccessful = true;
+        } catch (Exception e) {
+            lastRequestToAdminSuccessful = false;
+            throw e;
+        }
     }
 
     private void saveIpAddressesToFile() {

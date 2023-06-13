@@ -12,6 +12,13 @@ management:
       probes:
         enabled: true
       show-details: always
+      group:
+        readiness:
+          include:
+            - certificates
+            - diskSpace
+            - readinessState
+            - refreshScope
   endpoints:
     web:
       exposure:
@@ -46,6 +53,11 @@ spring:
   cloud:
     discovery:
       client:
+        # Health indicators are always UP with simple discovery client, therefore unnecessary.
+        health-indicator:
+          enabled: false
+        composite-indicator:
+          enabled: false
         simple:
           instances:
             hydra:
