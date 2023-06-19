@@ -22,8 +22,8 @@ GovSSO Incoming Proxy routes and filters inbound HTTP requests to Ory Hydra and 
         - `GOVSSO-Session/local/tls/hydra/hydra.localhost.keystore.p12`
         - `GOVSSO-Session/local/tls/session/session.localhost.keystore.p12`
 3. Add `127.0.0.1 admin.localhost hydra.localhost session.localhost` line to `hosts` file. This is needed only for
-   requests originating from GOVSSO-InProxy when it's running locally (not in Docker Compose). It's not needed for web
-   browsers as popular browsers already have built-in support for resolving `*.localhost` subdomains.
+   requests originating from GOVSSO-InProxy when it's running locally (not in Docker Compose) or during tests. It's not
+   needed for web browsers as popular browsers already have built-in support for resolving `*.localhost` subdomains.
 4. Run
    ```shell 
    ./mvnw spring-boot:run
