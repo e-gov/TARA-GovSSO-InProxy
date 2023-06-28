@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.0.7</version>
+        <version>3.1.1</version>
         <relativePath/><!-- Lookup parent from repository. -->
     </parent>
 
@@ -32,8 +32,8 @@
 
         <elastic-apm.version>1.39.0</elastic-apm.version>
         <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
-        <logstash-logback-encoder.version>7.3</logstash-logback-encoder.version>
-        <spring-cloud.version>2022.0.3</spring-cloud.version><!-- Spring Cloud 2022.0.x release train is compatible with Spring Boot 3.0.x -->
+        <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
+        <spring-cloud.version>2022.0.3</spring-cloud.version><!-- Spring Cloud 2022.0.x release train is compatible with Spring Boot 3.0.x and 3.1.x -->
         <wiremock.version>3.0.0-beta-10</wiremock.version>
         <ipaddress.version>5.4.0</ipaddress.version>
     </properties>
@@ -96,6 +96,14 @@
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-gateway</artifactId>
+            <exclusions>
+                <!-- https://docs.spring.io/spring-cloud-commons/docs/4.0.x/reference/html/#encryption-and-decryption
+                     pulls in older Bouncy Castle. This feature is not used in current application. -->
+                <exclusion>
+                    <groupId>org.springframework.security</groupId>
+                    <artifactId>spring-security-rsa</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>

@@ -43,7 +43,7 @@ GovSSO Incoming Proxy routes and filters inbound HTTP requests to Ory Hydra and 
                  -v "$HOME/.m2:/root/.m2" \
                  -v "$PWD:/usr/src/project" \
                  -w /usr/src/project \
-                 maven:3.8-openjdk-17 \
+                 maven:3.9-eclipse-temurin-17 \
                  mvn spring-boot:build-image
       ```
       Git Bash users on Windows should add `MSYS_NO_PATHCONV=1` in front of the command.
