@@ -41,6 +41,14 @@ public abstract class BaseTest extends BaseTestLoggingAssertion {
             .keyManagerPassword("changeit")
             .notifier(new ConsoleNotifier(true))
     );
+    protected static final WireMockServer TARA_MOCK_SERVER = new WireMockServer(WireMockConfiguration.wireMockConfig()
+            .httpDisabled(true)
+            .httpsPort(16442)
+            .keystorePath("src/test/resources/tara.localhost.keystore.p12")
+            .keystorePassword("changeit")
+            .keyManagerPassword("changeit")
+            .notifier(new ConsoleNotifier(true))
+    );
     protected static final WireMockServer ADMIN_MOCK_SERVER = new WireMockServer(WireMockConfiguration.wireMockConfig()
             .httpDisabled(true)
             .httpsPort(17442)
@@ -59,6 +67,7 @@ public abstract class BaseTest extends BaseTestLoggingAssertion {
         createStubsForScheduledTasks();
         HYDRA_MOCK_SERVER.start();
         SESSION_MOCK_SERVER.start();
+        TARA_MOCK_SERVER.start();
         ADMIN_MOCK_SERVER.start();
     }
 
@@ -72,6 +81,7 @@ public abstract class BaseTest extends BaseTestLoggingAssertion {
         RestAssured.port = port;
         HYDRA_MOCK_SERVER.resetAll();
         SESSION_MOCK_SERVER.resetAll();
+        TARA_MOCK_SERVER.resetAll();
         ADMIN_MOCK_SERVER.resetAll();
         createStubsForScheduledTasks();
     }
@@ -84,6 +94,9 @@ public abstract class BaseTest extends BaseTestLoggingAssertion {
                 .willReturn(aResponse()
                         .withStatus(200)));
         ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
+                .willReturn(aResponse()
+                        .withStatus(200)));
+        TARA_MOCK_SERVER.stubFor(get(urlPathEqualTo("/actuator/health/readiness"))
                 .willReturn(aResponse()
                         .withStatus(200)));
     }

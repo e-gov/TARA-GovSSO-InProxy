@@ -1,0 +1,65 @@
+spring:
+  cloud:
+    discovery:
+      client:
+        simple:
+          instances:
+            hydra:
+              - uri: https://hydra.localhost:14442/
+            session:
+              - uri: https://session.localhost:15442/
+    loadbalancer:
+      health-check:
+        path:
+          hydra: /health/ready
+          session: /actuator/health/readiness
+      eager-load:
+        clients:
+          - hydra
+          - session
+    gateway:
+      httpclient:
+        ssl:
+          trustedX509Certificates:
+            - classpath:govsso-ca.localhost.crt
+      routes:
+        - id: hydra-well-known
+          uri: lb://hydra
+          predicates:
+            - Path=/.well-known/openid-configuration,/.well-known/jwks.json
+        - id: oauth2-auth
+          uri: lb://hydra
+          predicates:
+            - Path=/oauth2/auth
+          filters:
+            - TraceParent
+            - Prompt
+        - id: oauth2-sessions-logout
+          uri: lb://hydra
+          predicates:
+            - Path=/oauth2/sessions/logout
+          filters:
+            - TraceParent
+        - id: oauth2-token
+          uri: lb://hydra
+          predicates:
+            - Path=/oauth2/token
+          filters:
+            - IpAddress
+        - id: admin
+          uri: lb://session
+          predicates:
+            - Path=/admin**,/admin/**
+          filters:
+            - RewritePath=/admin.*, /notfound
+        - id: root
+          uri: https://example.com # Not used, but valid URI is required by Spring
+          filters:
+            - RedirectTo=302, https://www.ria.ee/riigi-infosusteem/elektrooniline-identiteet-ja-usaldusteenused/kesksed-autentimisteenused#govsso
+          predicates:
+            - Path=/
+        - id: default
+          order: 9999 # Very low priority compared to the other routes (order value is 0 by default)
+          uri: lb://session
+          predicates:
+            - Path=/**

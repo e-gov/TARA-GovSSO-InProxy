@@ -1,0 +1,64 @@
+spring:
+  cloud:
+    discovery:
+      client:
+        simple:
+          instances:
+            hydra:
+              - uri: https://hydra.localhost:14442/
+            login:
+              - uri: https://tara.localhost:16442/
+    loadbalancer:
+      health-check:
+        path:
+          hydra: /health/ready
+          login: /actuator/health/readiness
+      eager-load:
+        clients:
+          - hydra
+          - login
+    gateway:
+      httpclient:
+        ssl:
+          trustedX509Certificates:
+            - classpath:tara-ca.localhost.crt
+            - classpath:govsso-ca.localhost.crt
+      routes:
+        - id: hydra-well-known
+          uri: lb://hydra
+          predicates:
+            - Path=/oidc/.well-known/openid-configuration,/oidc/jwks
+          filters:
+            - RewritePath=/oidc/.well-known/openid-configuration, /.well-known/openid-configuration
+            - RewritePath=/oidc/jwks, /.well-known/jwks.json
+        - id: oauth2-auth
+          uri: lb://hydra
+          predicates:
+            - Path=/oidc/authorize
+          filters:
+            - TraceParent
+            - RewritePath=/oidc/authorize, /oauth2/auth
+        - id: oauth2-token
+          uri: lb://hydra
+          predicates:
+            - Path=/oidc/token
+          filters:
+            - IpAddress
+            - RewritePath=/oidc/token, /oauth2/token
+        - id: hydra-userinfo
+          uri: lb://hydra
+          predicates:
+            - Path=/oidc/profile
+          filters:
+            - RewritePath=/oidc/profile, /userinfo
+        - id: root
+          uri: https://example.com # Not used, but valid URI is required by Spring
+          filters:
+            - RedirectTo=302, https://www.ria.ee/riigi-infosusteem/elektrooniline-identiteet-ja-usaldusteenused/kesksed-autentimisteenused#tara
+          predicates:
+            - Path=/
+        - id: default
+          order: 9999 # Very low priority compared to the other routes (order value is 0 by default)
+          uri: lb://login
+          predicates:
+            - Path=/**

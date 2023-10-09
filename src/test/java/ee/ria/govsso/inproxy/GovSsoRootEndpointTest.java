@@ -1,12 +1,13 @@
 package ee.ria.govsso.inproxy;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.test.context.ActiveProfiles;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.blankOrNullString;
 import static org.hamcrest.Matchers.equalTo;
-
-public class RootEndpointTest extends BaseTest {
+@ActiveProfiles({"govsso"})
+public class GovSsoRootEndpointTest extends BaseTest {
 
     @Test
     void rootPath_RedirectsWith302() {

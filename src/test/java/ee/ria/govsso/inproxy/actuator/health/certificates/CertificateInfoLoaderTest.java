@@ -5,13 +5,14 @@ import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.config.HttpClientProperties;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.security.KeyStore;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-
+@ActiveProfiles({"govsso"})
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 class CertificateInfoLoaderTest extends BaseTest {
 

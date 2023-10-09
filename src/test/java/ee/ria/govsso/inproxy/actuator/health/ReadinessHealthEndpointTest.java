@@ -4,12 +4,13 @@ import ee.ria.govsso.inproxy.service.TokenRequestAllowedIpAddressesService;
 import io.restassured.response.ValidatableResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Set;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
-
+@ActiveProfiles({"govsso"})
 class ReadinessHealthEndpointTest extends HealthEndpointTest {
 
     public ReadinessHealthEndpointTest(

@@ -4,6 +4,7 @@ import ee.ria.govsso.inproxy.BaseTest;
 import ee.ria.govsso.inproxy.service.TokenRequestAllowedIpAddressesService;
 import io.restassured.response.ValidatableResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Set;
 
@@ -14,6 +15,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
+@ActiveProfiles({"govsso"})
 @RequiredArgsConstructor
 abstract class HealthEndpointTest extends BaseTest {
 

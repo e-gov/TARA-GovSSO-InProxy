@@ -2,14 +2,15 @@ package ee.ria.govsso.inproxy;
 
 import ee.ria.govsso.inproxy.util.TestUtils;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.context.ActiveProfiles;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalToCompressingWhiteSpace;
-
-public class HydraWellKnownEndpointTest extends BaseTest {
+@ActiveProfiles({"tara"})
+public class TaraHydraWellKnownEndpointTest extends BaseTest {
 
     @Test
     void hydra_openIdConfiguration_ReturnsConfiguration() {
@@ -21,7 +22,7 @@ public class HydraWellKnownEndpointTest extends BaseTest {
         String expectedResponse = TestUtils.getResourceAsString("__files/mock_responses/hydra_openid-configuration.json");
         given()
                 .when()
-                .get("/.well-known/openid-configuration")
+                .get("/oidc/.well-known/openid-configuration")
                 .then()
                 .assertThat()
                 .statusCode(200)
@@ -38,7 +39,7 @@ public class HydraWellKnownEndpointTest extends BaseTest {
         String expectedResponse = TestUtils.getResourceAsString("__files/mock_responses/hydra_jwks.json");
         given()
                 .when()
-                .get("/.well-known/jwks.json")
+                .get("/oidc/jwks")
                 .then()
                 .assertThat()
                 .statusCode(200)
