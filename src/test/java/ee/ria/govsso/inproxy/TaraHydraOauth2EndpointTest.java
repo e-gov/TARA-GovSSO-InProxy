@@ -34,7 +34,7 @@ public class TaraHydraOauth2EndpointTest extends BaseTest {
 
     @BeforeEach
     void setupServerMocks() {
-        HYDRA_MOCK_SERVER.stubFor(get(urlEqualTo("/oauth2/token"))
+        HYDRA_MOCK_SERVER.stubFor(post(urlEqualTo("/oauth2/token"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
@@ -57,12 +57,6 @@ public class TaraHydraOauth2EndpointTest extends BaseTest {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBody(responseBody)));
-
-        HYDRA_MOCK_SERVER.stubFor(post(urlEqualTo("/oauth2/token"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBodyFile("mock_responses/hydra_token.json")));
 
         tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
 
@@ -108,7 +102,7 @@ public class TaraHydraOauth2EndpointTest extends BaseTest {
                 .body("error", Matchers.equalTo("unauthorized_client"))
                 .body("error_description", Matchers.equalTo("Your IP address 1.2.3.4 is not whitelisted"));
 
-        ADMIN_MOCK_SERVER.verify(exactly(0), postRequestedFor(urlEqualTo("/oauth2/token")));
+        HYDRA_MOCK_SERVER.verify(exactly(0), postRequestedFor(urlEqualTo("/oauth2/token")));
     }
 
     //TODO Add more tests for odd authorization header cases
@@ -130,7 +124,7 @@ public class TaraHydraOauth2EndpointTest extends BaseTest {
                 .body("error", Matchers.equalTo("invalid_grant"))
                 .body("error_description", Matchers.equalTo("The provided authorization grant is invalid."));
 
-        ADMIN_MOCK_SERVER.verify(exactly(0), postRequestedFor(urlEqualTo("/oauth2/token")));
+        HYDRA_MOCK_SERVER.verify(exactly(0), postRequestedFor(urlEqualTo("/oauth2/token")));
     }
 
     @Test
@@ -158,25 +152,95 @@ public class TaraHydraOauth2EndpointTest extends BaseTest {
                 .body("error", Matchers.equalTo("invalid_grant"))
                 .body("error_description", Matchers.equalTo("The provided authorization grant is invalid."));
 
-        ADMIN_MOCK_SERVER.verify(exactly(0), postRequestedFor(urlEqualTo("/oauth2/token")));
+        HYDRA_MOCK_SERVER.verify(exactly(0), postRequestedFor(urlEqualTo("/oauth2/token")));
     }
 
-    @Test
-    void hydra_oAuthTokenRequestIpInHeaderNotWhitelisted_Returns400Error() {
+    @ParameterizedTest
+    @ValueSource(strings = {"client_id=client-a", "code=i1WsRn1uB1&client_id=client-a"})
+    void hydra_oAuthTokenRequestWithSameClientIdInHeaderAndBody_Returns200(String requestBody) {
+
+        String responseBody = String.format("{\"client-a\":[\"%s\"]}", "1.2.3.4");
 
         ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBody("{\"client-a\":[\"127.0.0.1\"]}")));
+                        .withBody(responseBody)));
 
         tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
+
+        String expectedResponse = TestUtils.getResourceAsString("__files/mock_responses/hydra_token.json");
+        given()
+                .when()
+                .contentType("application/x-www-form-urlencoded; charset=utf-8")
+                .header("X-Forwarded-For", "1.2.3.4")
+                .header("Authorization", "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
+                .body(requestBody)
+                .post("/oidc/token")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body(equalToCompressingWhiteSpace(expectedResponse));
+
+        HYDRA_MOCK_SERVER.verify(exactly(1), postRequestedFor(urlEqualTo("/oauth2/token")));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"client_id=client-b", "code=i1WsRn1uB1&client_id=client-b"})
+    void hydra_oAuthTokenRequestWithDifferentClientIdInHeaderAndBody_Returns400Error(String requestBody) {
 
         given()
                 .when()
                 .contentType("application/x-www-form-urlencoded; charset=utf-8")
+                .header("X-Forwarded-For", "1.2.3.4")
                 .header("Authorization", "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
-                .header("X-Forwarded-For", "1.1.1.1")
+                .body(requestBody)
+                .post("/oidc/token")
+                .then()
+                .assertThat()
+                .statusCode(400)
+                .body("error", Matchers.equalTo("invalid_grant"))
+                .body("error_description", Matchers.equalTo("The provided authorization grant is invalid."));
+
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"client_id=client-a", "code=i1WsRn1uB1&client_id=client-a"})
+    void hydra_oAuthTokenRequestCorrectClientSecretPost_Returns200(String requestBody) {
+
+        String responseBody = String.format("{\"client-a\":[\"%s\"]}", "1.2.3.4");
+
+        ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBody(responseBody)));
+
+        tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
+
+        String expectedResponse = TestUtils.getResourceAsString("__files/mock_responses/hydra_token.json");
+        given()
+                .when()
+                .contentType("application/x-www-form-urlencoded; charset=utf-8")
+                .header("X-Forwarded-For", "1.2.3.4")
+                .body(requestBody)
+                .post("/oidc/token")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body(equalToCompressingWhiteSpace(expectedResponse));
+
+        HYDRA_MOCK_SERVER.verify(exactly(1), postRequestedFor(urlEqualTo("/oauth2/token")));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "%="})
+    void hydra_oAuthTokenRequestIncorrectClientSecretPost_Returns400Error(String requestBody) {
+
+        given()
+                .when()
+                .contentType("application/x-www-form-urlencoded; charset=utf-8")
+                .body(requestBody)
                 .post("/oidc/token")
                 .then()
                 .assertThat()
@@ -184,10 +248,10 @@ public class TaraHydraOauth2EndpointTest extends BaseTest {
                 .header(HttpHeaders.CONTENT_TYPE, "application/json")
                 .header(HttpHeaders.CACHE_CONTROL, "no-store")
                 .header(HttpHeaders.PRAGMA, "no-cache")
-                .body("error", Matchers.equalTo("unauthorized_client"))
-                .body("error_description", Matchers.equalTo("Your IP address 1.1.1.1 is not whitelisted"));
+                .body("error", Matchers.equalTo("invalid_grant"))
+                .body("error_description", Matchers.equalTo("The provided authorization grant is invalid."));
 
-        ADMIN_MOCK_SERVER.verify(exactly(0), postRequestedFor(urlEqualTo("/oauth2/token")));
+        HYDRA_MOCK_SERVER.verify(exactly(0), postRequestedFor(urlEqualTo("/oauth2/token")));
     }
 
     @Test
@@ -216,6 +280,12 @@ public class TaraHydraOauth2EndpointTest extends BaseTest {
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBody("{\"client-a\":[\"1.1.1.1\"]}")));
+
+        HYDRA_MOCK_SERVER.stubFor(get(urlEqualTo("/oauth2/token"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/hydra_token.json")));
 
         tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
 

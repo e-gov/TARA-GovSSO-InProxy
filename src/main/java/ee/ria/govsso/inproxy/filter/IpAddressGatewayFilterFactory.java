@@ -2,6 +2,8 @@ package ee.ria.govsso.inproxy.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ee.ria.govsso.inproxy.service.TokenRequestAllowedIpAddressesService;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
@@ -16,14 +18,18 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @Component
 public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<IpAddressGatewayFilterFactory.Config> {
 
     public static final String AUTHENTICATION_SCHEME_BASIC = "basic";
+    public static final String REQUEST_BODY_FORM_ELEMENT_KEY = "client_id";
 
     private final TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService;
     private final Jackson2JsonEncoder jackson2JsonEncoder;
@@ -75,20 +81,65 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
     }
 
     private String getClientId(ServerWebExchange exchange) {
+        String clientIdFromHeader = getClientIdFromHeader(exchange);
+        String clientIdFromBody = getClientIdFromBody(exchange);
+
+        if (clientIdFromHeader == null) {
+            return clientIdFromBody;
+        } else if (clientIdFromBody == null) {
+            return clientIdFromHeader;
+        }
+
+        if (StringUtils.equals(clientIdFromHeader, clientIdFromBody)) {
+            return clientIdFromHeader;
+        }
+
+        return null;
+    }
+
+    private String getClientIdFromHeader(ServerWebExchange exchange) {
         String authorization = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if (authorization == null) {
-            return null;
+        if (authorization != null) {
+            authorization = authorization.trim();
+            if (authorization.toLowerCase().startsWith(AUTHENTICATION_SCHEME_BASIC)
+                    && !authorization.equalsIgnoreCase(AUTHENTICATION_SCHEME_BASIC)) {
+                String base64Credentials = authorization.substring(AUTHENTICATION_SCHEME_BASIC.length()).trim();
+                byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
+                String[] credentials = new String(credDecoded, StandardCharsets.UTF_8).split(":", 2);
+                return credentials[0];
+            }
         }
-        authorization = authorization.trim();
-        if (authorization.toLowerCase().startsWith(AUTHENTICATION_SCHEME_BASIC)
-                && !authorization.equalsIgnoreCase(AUTHENTICATION_SCHEME_BASIC)) {
-            String base64Credentials = authorization.substring(AUTHENTICATION_SCHEME_BASIC.length()).trim();
-            byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
-            String[] credentials = new String(credDecoded, StandardCharsets.UTF_8).split(":", 2);
-            return credentials[0];
-        } else {
-            return null;
+        return null;
+    }
+
+    private String getClientIdFromBody(ServerWebExchange exchange) {
+        String requestBody = exchange.getAttribute(ServerWebExchangeUtils.CACHED_REQUEST_BODY_ATTR);
+        if (requestBody != null) {
+            Map<String, String> requestBodyMap = parseFormToMap(requestBody);
+            if (requestBodyMap.containsKey(REQUEST_BODY_FORM_ELEMENT_KEY)) {
+                return requestBodyMap.get(REQUEST_BODY_FORM_ELEMENT_KEY);
+            }
         }
+        return null;
+    }
+
+    private Map<String, String> parseFormToMap(String encodedString) {
+        Map<String, String> map = new HashMap<>();
+        try {
+            String[] pairs = org.springframework.util.StringUtils.tokenizeToStringArray(encodedString, "&");
+            for (String pair : pairs) {
+                String[] keyValue = pair.split("=", 2);
+                if (keyValue.length > 1) {
+                    String key = URLDecoder.decode(keyValue[0], StandardCharsets.UTF_8);
+                    String value = URLDecoder.decode(keyValue[1], StandardCharsets.UTF_8);
+                    map.put(key, value);
+                }
+            }
+        } catch (IllegalArgumentException e){
+            log.info("Unable to decode URL-encoded string: ", e);
+        }
+
+        return map;
     }
 
     public static class Config {

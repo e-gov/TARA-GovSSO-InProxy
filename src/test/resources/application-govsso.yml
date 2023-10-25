@@ -45,6 +45,9 @@ spring:
           predicates:
             - Path=/oauth2/token
           filters:
+            - name: CacheRequestBody
+              args:
+                bodyClass: java.lang.String
             - IpAddress
         - id: admin
           uri: lb://session

@@ -43,6 +43,9 @@ spring:
           predicates:
             - Path=/oidc/token
           filters:
+            - name: CacheRequestBody
+              args:
+                bodyClass: java.lang.String
             - IpAddress
             - RewritePath=/oidc/token, /oauth2/token
         - id: hydra-userinfo
