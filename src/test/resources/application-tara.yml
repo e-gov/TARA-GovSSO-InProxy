@@ -27,7 +27,7 @@ spring:
         - id: hydra-well-known
           uri: lb://hydra
           predicates:
-            - Path=/oidc/.well-known/openid-configuration,/oidc/jwks
+            - Path=/.well-known/openid-configuration,/oidc/.well-known/openid-configuration,/oidc/jwks
           filters:
             - RewritePath=/oidc/.well-known/openid-configuration, /.well-known/openid-configuration
             - RewritePath=/oidc/jwks, /.well-known/jwks.json
@@ -57,6 +57,12 @@ spring:
             - RedirectTo=302, https://www.ria.ee/riigi-infosusteem/elektrooniline-identiteet-ja-usaldusteenused/kesksed-autentimisteenused#tara
           predicates:
             - Path=/
+        - id: heartbeat
+          uri: lb://login
+          predicates:
+            - Path=/heartbeat**,/heartbeat/**
+          filters:
+            - RewritePath=/heartbeat.*, /notfound
         - id: default
           order: 9999 # Very low priority compared to the other routes (order value is 0 by default)
           uri: lb://login

@@ -10,7 +10,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static io.restassured.RestAssured.given;
 @ActiveProfiles({"govsso"})
-public class AdminEndpointTest extends BaseTest {
+public class GovSsoAdminEndpointTest extends BaseTest {
 
     @BeforeEach
     void setupAdminMocks() {

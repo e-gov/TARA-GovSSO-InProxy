@@ -2,6 +2,8 @@ package ee.ria.govsso.inproxy;
 
 import ee.ria.govsso.inproxy.util.TestUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.context.ActiveProfiles;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -12,8 +14,9 @@ import static org.hamcrest.Matchers.equalToCompressingWhiteSpace;
 @ActiveProfiles({"tara"})
 public class TaraHydraWellKnownEndpointTest extends BaseTest {
 
-    @Test
-    void hydra_openIdConfiguration_ReturnsConfiguration() {
+    @ParameterizedTest
+    @ValueSource(strings = {"/.well-known/openid-configuration", "/oidc/.well-known/openid-configuration"})
+    void hydra_openIdConfiguration_ReturnsConfiguration(String wellKnownPath) {
         HYDRA_MOCK_SERVER.stubFor(get(urlEqualTo("/.well-known/openid-configuration"))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -22,7 +25,7 @@ public class TaraHydraWellKnownEndpointTest extends BaseTest {
         String expectedResponse = TestUtils.getResourceAsString("__files/mock_responses/hydra_openid-configuration.json");
         given()
                 .when()
-                .get("/oidc/.well-known/openid-configuration")
+                .get(wellKnownPath)
                 .then()
                 .assertThat()
                 .statusCode(200)
