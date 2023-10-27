@@ -12,7 +12,7 @@
 
     <groupId>ee.ria.govsso</groupId>
     <artifactId>govsso-inproxy</artifactId>
-    <version>1.0.2</version>
+    <version>1.1.0</version>
 
     <name>GovSSO Incoming Proxy</name>
     <licenses>
