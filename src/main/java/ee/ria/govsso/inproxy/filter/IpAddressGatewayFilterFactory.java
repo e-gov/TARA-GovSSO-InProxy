@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import ee.ria.govsso.inproxy.service.TokenRequestAllowedIpAddressesService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
@@ -34,6 +35,10 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
     private final TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService;
     private final Jackson2JsonEncoder jackson2JsonEncoder;
 
+    @Value("${govsso-inproxy.token-request-block-ip-addresses}")
+    private boolean ipBlockEnabled;
+
+
     public IpAddressGatewayFilterFactory(TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService,
                                          ObjectMapper objectMapper) {
         super(Config.class);
@@ -52,7 +57,10 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
             if (clientId == null) {
                 return createErrorResponse(exchange, "invalid_grant", "The provided authorization grant is invalid.");
             } else if (!tokenRequestAllowedIpAddressesService.isTokenRequestAllowed(clientId, requestIpAddress)) {
-                return createErrorResponse(exchange, "unauthorized_client", String.format("Your IP address %s is not whitelisted", requestIpAddress));
+                if(ipBlockEnabled){
+                    return createErrorResponse(exchange, "unauthorized_client", String.format("Your IP address %s is not whitelisted", requestIpAddress));
+                }
+                log.warn(String.format("unauthorized_client - IP address %s is not whitelisted for client_id %s, allowing request", requestIpAddress, clientId), exchange);
             }
 
             return chain.filter(exchange);

@@ -1,15 +1,18 @@
 package ee.ria.govsso.inproxy;
 
+import ee.ria.govsso.inproxy.filter.IpAddressGatewayFilterFactory;
 import ee.ria.govsso.inproxy.service.TokenRequestAllowedIpAddressesService;
 import ee.ria.govsso.inproxy.util.TestUtils;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
@@ -111,6 +114,45 @@ public class GovSsoHydraOauth2EndpointTest extends BaseTest {
                 .body("error_description", Matchers.equalTo("Your IP address 1.2.3.4 is not whitelisted"));
 
         HYDRA_MOCK_SERVER.verify(exactly(0), postRequestedFor(urlEqualTo("/oauth2/token")));
+    }
+
+    @Nested
+    @TestPropertySource(properties = "govsso-inproxy.token-request-block-ip-addresses=false")
+    class IpBlockNotEnabledTests extends BaseTest {
+
+        @BeforeEach
+        void setupServerMocks() {
+            GovSsoHydraOauth2EndpointTest.this.setupServerMocks();
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {"1.2.3.5-100\", \"111.11.11.11", "1.2.3.2"})
+        void hydra_oAuthTokenRequestIpNotInAllowedIps_Returns200_AndLogError(String whitelistedIps) {
+
+            String responseBody = String.format("{\"client-a\":[\"%s\"]}", whitelistedIps);
+
+            ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
+                    .willReturn(aResponse()
+                            .withStatus(200)
+                            .withHeader("Content-Type", "application/json; charset=UTF-8")
+                            .withBody(responseBody)));
+
+            tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
+
+            given()
+                    .when()
+                    .contentType("application/x-www-form-urlencoded; charset=utf-8")
+                    .header("Authorization", "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
+                    .header("X-Forwarded-For", "1.2.3.4")
+                    .post("/oauth2/token")
+                    .then()
+                    .assertThat()
+                    .statusCode(200);
+
+            assertWarningIsLogged(IpAddressGatewayFilterFactory.class, "unauthorized_client - IP address 1.2.3.4 is not whitelisted for client_id client-a, allowing request");
+            HYDRA_MOCK_SERVER.verify(exactly(1), postRequestedFor(urlEqualTo("/oauth2/token")));
+        }
+
     }
 
     //TODO Add more tests for odd authorization header cases
