@@ -30,7 +30,7 @@
         <spring-boot.build-image.builder>paketobuildpacks/builder:tiny</spring-boot.build-image.builder>
         <spring-boot.build-image.imageName>${project.artifactId}:latest</spring-boot.build-image.imageName><!-- Use "latest" tag instead of version tag. -->
 
-        <elastic-apm.version>1.44.0</elastic-apm.version>
+        <elastic-apm.version>1.43.0</elastic-apm.version><!-- TODO AUT-1562 Upgrade to >= 1.44.0 after resolving outgoing HTTP requests issue. -->
         <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
         <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
         <spring-cloud.version>2022.0.4</spring-cloud.version><!-- Spring Cloud 2022.0.x release train is compatible with Spring Boot 3.0.x and 3.1.x -->
