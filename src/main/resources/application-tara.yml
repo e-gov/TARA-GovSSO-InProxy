@@ -31,6 +31,7 @@ spring:
           filters:
             - RewritePath=/oidc/.well-known/openid-configuration, /.well-known/openid-configuration
             - RewritePath=/oidc/jwks, /.well-known/jwks.json
+            - WellKnownResponseCache=30m,10MB
         - id: oauth2-auth
           uri: lb://hydra
           predicates:

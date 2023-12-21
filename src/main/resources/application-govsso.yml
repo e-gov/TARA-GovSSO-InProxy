@@ -27,6 +27,8 @@ spring:
           uri: lb://hydra
           predicates:
             - Path=/.well-known/openid-configuration,/.well-known/jwks.json
+          filters:
+            - WellKnownResponseCache=30m,10MB
         - id: oauth2-auth
           uri: lb://hydra
           predicates:

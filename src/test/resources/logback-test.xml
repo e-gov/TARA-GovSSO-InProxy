@@ -15,6 +15,7 @@
 
     <!-- Decrease the amount of logs from Jetty started by WireMock -->
     <logger name="org.eclipse.jetty" level="INFO"/>
+    <logger name="ee.ria.govsso.inproxy" level="DEBUG"/>
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
