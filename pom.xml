@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.1.6</version>
+        <version>3.2.2</version>
         <relativePath/><!-- Lookup parent from repository. -->
     </parent>
 
@@ -30,12 +30,12 @@
         <spring-boot.build-image.builder>paketobuildpacks/builder:tiny</spring-boot.build-image.builder>
         <spring-boot.build-image.imageName>${project.artifactId}:latest</spring-boot.build-image.imageName><!-- Use "latest" tag instead of version tag. -->
 
-        <elastic-apm.version>1.43.0</elastic-apm.version><!-- TODO AUT-1562 Upgrade to >= 1.44.0 after resolving outgoing HTTP requests issue. -->
+        <elastic-apm.version>1.46.0</elastic-apm.version>
         <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
         <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
-        <spring-cloud.version>2022.0.4</spring-cloud.version><!-- Spring Cloud 2022.0.x release train is compatible with Spring Boot 3.0.x and 3.1.x -->
-        <wiremock.version>3.0.1</wiremock.version>
-        <ipaddress.version>5.4.0</ipaddress.version>
+        <spring-cloud.version>2023.0.0</spring-cloud.version><!-- Spring Cloud 2023.0.x release train is only compatible with Spring Boot 3.2.x, see table 1 at https://spring.io/projects/spring-cloud -->
+        <wiremock.version>3.4.0</wiremock.version>
+        <ipaddress.version>5.4.2</ipaddress.version>
     </properties>
 
     <dependencyManagement>
@@ -114,8 +114,9 @@
             <artifactId>spring-cloud-starter-loadbalancer</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.github.tomakehurst</groupId>
-            <artifactId>wiremock</artifactId>
+            <groupId>org.wiremock</groupId>
+            <!-- Regular wiremock is incompatible with Spring Boot 3.2, therefore standalone should be used instead (https://github.com/wiremock/wiremock/issues/2395) -->
+            <artifactId>wiremock-standalone</artifactId>
             <version>${wiremock.version}</version>
             <scope>test</scope>
         </dependency>
