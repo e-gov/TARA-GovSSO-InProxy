@@ -1,8 +1,8 @@
 <img src="doc/img/eu_regional_development_fund_horizontal.jpg" width="350" height="200" alt="European Union European Regional Development Fund"/>
 
-# GovSSO/TARA Incoming Proxy
+# TARA/GovSSO Incoming Proxy
 
-GovSSO/TARA Incoming Proxy routes and filters inbound HTTP requests to Ory Hydra and either GovSSO Session or TARA
+TARA/GovSSO Incoming Proxy routes and filters inbound HTTP requests to Ory Hydra and either GovSSO Session or TARA
 Login.
 
 ## Prerequisites
@@ -60,14 +60,14 @@ Login.
 
 ## Configuration
 
-### Integration with GovSSO Admin
+### Integration with TARA/GovSSO Admin
 
 | Parameter | Mandatory | Description | Example |
 | :-------- | :-------- | :---------- | :------ |
-| `govsso-inproxy.admin.base-url` | Yes | GovSSO/TARA Admin administrative API base URL. | `https://admin.localhost:17443/` |
+| `govsso-inproxy.admin.base-url` | Yes | TARA/GovSSO Admin administrative API base URL. | `https://admin.localhost:17443/` |
 | `govsso-inproxy.admin.token-request-allowed-ip-addresses-storage-path` | Yes | File path where token request allowed IP addresses will be stored. | `/tmp/ipaddresses` |
-| `govsso-inproxy.admin.token-request-allowed-ip-addresses-refresh-interval-in-milliseconds` | No | Interval for the scheduled task that requests allowed IP addresses from GovSSO Admin. If not provided, defaults to `60000`. | `60000` |
-| `govsso-inproxy.admin.tls.trust-store` | Yes | Location of trust-store, containing trust anchors (CA or end-entity certificates) for verifying TLS connections to GovSSO Admin. | `classpath:path/to/trust-store.p12` or `file:/path/to/trust-store.p12` |
+| `govsso-inproxy.admin.token-request-allowed-ip-addresses-refresh-interval-in-milliseconds` | No | Interval for the scheduled task that requests allowed IP addresses from TARA/GovSSO Admin. If not provided, defaults to `60000`. | `60000` |
+| `govsso-inproxy.admin.tls.trust-store` | Yes | Location of trust-store, containing trust anchors (CA or end-entity certificates) for verifying TLS connections to TARA/GovSSO Admin. | `classpath:path/to/trust-store.p12` or `file:/path/to/trust-store.p12` |
 | `govsso-inproxy.admin.tls.trust-store-password` | Yes | Trust-store password. | `changeit` |
 | `govsso-inproxy.admin.tls.trust-store-type` | No | Trust-store type. If not provided, defaults to `PKCS12`. | `PKCS12` |
 
