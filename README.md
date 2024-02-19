@@ -2,7 +2,8 @@
 
 # GovSSO/TARA Incoming Proxy
 
-GovSSO/TARA Incoming Proxy routes and filters inbound HTTP requests to Ory Hydra and either GovSSO Session or TARA Login.
+GovSSO/TARA Incoming Proxy routes and filters inbound HTTP requests to Ory Hydra and either GovSSO Session or TARA
+Login.
 
 ## Prerequisites
 
@@ -10,22 +11,23 @@ GovSSO/TARA Incoming Proxy routes and filters inbound HTTP requests to Ory Hydra
 
 ## Building and Running Locally
 
-1. Follow [GOVSSO-Session/README.md](https://github.com/e-gov/GOVSSO-Session/blob/master/README.md) to run dependent
+1. Follow [GovSSO-Session/README.md](https://github.com/e-gov/GovSSO-Session/blob/master/README.md) to run dependent
    services.
-2. If you have generated new TLS certificates (doable at project GOVSSO-Session) after the last copy, then:
+2. If you have generated new TLS certificates (doable at project GovSSO-Session) after the last copy, then:
     * copy-replace the following files to `src/main/resources`:
-        - `GOVSSO-Session/local/tls/govsso-ca/govsso-ca.localhost.crt`
-        - `GOVSSO-Session/local/tls/tara-ca/tara-ca.localhost.crt`
-        - `GOVSSO-Session/local/tls/inproxy/inproxy.localhost.admin.truststore.p12`
-        - `GOVSSO-Session/local/tls/inproxy/inproxy.localhost.keystore.p12`
+        - `GovSSO-Session/local/tls/govsso-ca/govsso-ca.localhost.crt`
+        - `GovSSO-Session/local/tls/tara-ca/tara-ca.localhost.crt`
+        - `GovSSO-Session/local/tls/inproxy/inproxy.localhost.admin.truststore.p12`
+        - `GovSSO-Session/local/tls/inproxy/inproxy.localhost.keystore.p12`
     * copy-replace the following files to `src/test/resources`:
-        - `GOVSSO-Session/local/tls/admin/admin.localhost.keystore.p12`
-        - `GOVSSO-Session/local/tls/hydra/hydra.localhost.keystore.p12`
-        - `GOVSSO-Session/local/tls/session/session.localhost.keystore.p12`
-        - `GOVSSO-Session/local/tls/tara/tara.localhost.keystore.p12`
-3. Add `127.0.0.1 admin.localhost hydra.localhost session.localhost tara.localhost` line to `hosts` file. This is needed only for
-   requests originating from GOVSSO-InProxy when it's running locally (not in Docker Compose) or during tests. It's not
-   needed for web browsers as popular browsers already have built-in support for resolving `*.localhost` subdomains.
+        - `GovSSO-Session/local/tls/admin/admin.localhost.keystore.p12`
+        - `GovSSO-Session/local/tls/hydra/hydra.localhost.keystore.p12`
+        - `GovSSO-Session/local/tls/session/session.localhost.keystore.p12`
+        - `GovSSO-Session/local/tls/tara/tara.localhost.keystore.p12`
+3. Add `127.0.0.1 admin.localhost hydra.localhost session.localhost tara.localhost` line to `hosts` file. This is needed
+   only for requests originating from TARA-GovSSO-InProxy when it's running locally (not in Docker Compose) or during
+   tests. It's not needed for web browsers as popular browsers already have built-in support for resolving `*.localhost`
+   subdomains.
 4. Decide if you want to interface with GovSSO or TARA and choose the appropriate Spring profile in the next step.
    ```shell 
    ./mvnw spring-boot:run -Dspring.profiles.active=<tara|govsso>
@@ -49,7 +51,8 @@ GovSSO/TARA Incoming Proxy routes and filters inbound HTTP requests to Ory Hydra
                  mvn spring-boot:build-image
       ```
       Git Bash users on Windows should add `MSYS_NO_PATHCONV=1` in front of the command.
-2. For running in GovSSO mode, follow GOVSSO-Session/README.md to run GOVSSO-InProxy and dependent services inside Docker Compose
+2. For running in GovSSO mode, follow GovSSO-Session/README.md to run TARA-GovSSO-InProxy and dependent services inside
+   Docker Compose
 
 ## Endpoints
 
