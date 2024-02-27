@@ -11,10 +11,10 @@
     </parent>
 
     <groupId>ee.ria.govsso</groupId>
-    <artifactId>govsso-inproxy</artifactId>
+    <artifactId>tara-govsso-inproxy</artifactId>
     <version>1.1.2</version>
 
-    <name>GovSSO Incoming Proxy</name>
+    <name>TARA/GovSSO Incoming Proxy</name>
     <licenses>
         <license>
             <name>MIT</name>
