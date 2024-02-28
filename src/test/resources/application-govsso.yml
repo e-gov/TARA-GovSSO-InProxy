@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: govsso-inproxy
   cloud:
     discovery:
       client:

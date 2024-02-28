@@ -47,8 +47,6 @@ server:
     protocol: TLS
 
 spring:
-  application:
-    name: govsso-inproxy
   main:
     banner-mode: off
   cloud:
