@@ -64,12 +64,12 @@ Login.
 
 | Parameter | Mandatory | Description | Example |
 | :-------- | :-------- | :---------- | :------ |
-| `govsso-inproxy.admin.base-url` | Yes | TARA/GovSSO Admin administrative API base URL. | `https://admin.localhost:17443/` |
-| `govsso-inproxy.admin.token-request-allowed-ip-addresses-storage-path` | Yes | File path where token request allowed IP addresses will be stored. | `/tmp/ipaddresses` |
-| `govsso-inproxy.admin.token-request-allowed-ip-addresses-refresh-interval-in-milliseconds` | No | Interval for the scheduled task that requests allowed IP addresses from TARA/GovSSO Admin. If not provided, defaults to `60000`. | `60000` |
-| `govsso-inproxy.admin.tls.trust-store` | Yes | Location of trust-store, containing trust anchors (CA or end-entity certificates) for verifying TLS connections to TARA/GovSSO Admin. | `classpath:path/to/trust-store.p12` or `file:/path/to/trust-store.p12` |
-| `govsso-inproxy.admin.tls.trust-store-password` | Yes | Trust-store password. | `changeit` |
-| `govsso-inproxy.admin.tls.trust-store-type` | No | Trust-store type. If not provided, defaults to `PKCS12`. | `PKCS12` |
+| `tara-govsso-inproxy.admin.base-url` | Yes | TARA/GovSSO Admin administrative API base URL. | `https://admin.localhost:17443/` |
+| `tara-govsso-inproxy.admin.token-request-allowed-ip-addresses-storage-path` | Yes | File path where token request allowed IP addresses will be stored. | `/tmp/ipaddresses` |
+| `tara-govsso-inproxy.admin.token-request-allowed-ip-addresses-refresh-interval-in-milliseconds` | No | Interval for the scheduled task that requests allowed IP addresses from TARA/GovSSO Admin. If not provided, defaults to `60000`. | `60000` |
+| `tara-govsso-inproxy.admin.tls.trust-store` | Yes | Location of trust-store, containing trust anchors (CA or end-entity certificates) for verifying TLS connections to TARA/GovSSO Admin. | `classpath:path/to/trust-store.p12` or `file:/path/to/trust-store.p12` |
+| `tara-govsso-inproxy.admin.tls.trust-store-password` | Yes | Trust-store password. | `changeit` |
+| `tara-govsso-inproxy.admin.tls.trust-store-type` | No | Trust-store type. If not provided, defaults to `PKCS12`. | `PKCS12` |
 
 ### Integration with Ory Hydra and GovSSO Session
 

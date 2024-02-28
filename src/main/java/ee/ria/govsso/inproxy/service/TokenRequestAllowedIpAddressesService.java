@@ -54,7 +54,7 @@ public class TokenRequestAllowedIpAddressesService {
         saveIpAddressesToFile();
     }
 
-    @Scheduled(fixedRateString = "${govsso-inproxy.admin.token-request-allowed-ip-addresses-refresh-interval-in-milliseconds:60000}")
+    @Scheduled(fixedRateString = "${tara-govsso-inproxy.admin.token-request-allowed-ip-addresses-refresh-interval-in-milliseconds:60000}")
     public void updateAllowedIpsTask() {
         try {
             queryIpAddressesFromAdminService();

@@ -117,7 +117,7 @@ public class GovSsoHydraOauth2EndpointTest extends BaseTest {
     }
 
     @Nested
-    @TestPropertySource(properties = "govsso-inproxy.token-request-block-ip-addresses=false")
+    @TestPropertySource(properties = "tara-govsso-inproxy.token-request-block-ip-addresses=false")
     class IpBlockNotEnabledTests extends BaseTest {
 
         @BeforeEach

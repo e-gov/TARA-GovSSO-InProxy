@@ -35,7 +35,7 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
     private final TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService;
     private final Jackson2JsonEncoder jackson2JsonEncoder;
 
-    @Value("${govsso-inproxy.token-request-block-ip-addresses}")
+    @Value("${tara-govsso-inproxy.token-request-block-ip-addresses}")
     private boolean ipBlockEnabled;
 
 

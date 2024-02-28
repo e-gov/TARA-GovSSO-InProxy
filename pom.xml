@@ -197,7 +197,7 @@
                 <configuration>
                     <environmentVariables>
                         <ELASTIC_APM_ENABLED>false</ELASTIC_APM_ENABLED>
-                        <govsso-inproxy.admin.token-request-allowed-ip-addresses-storage-path>target/ipaddresses</govsso-inproxy.admin.token-request-allowed-ip-addresses-storage-path>
+                        <tara-govsso-inproxy.admin.token-request-allowed-ip-addresses-storage-path>target/ipaddresses</tara-govsso-inproxy.admin.token-request-allowed-ip-addresses-storage-path>
                     </environmentVariables>
                     <excludes>
                         <exclude>

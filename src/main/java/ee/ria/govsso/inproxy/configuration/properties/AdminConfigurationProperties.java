@@ -11,7 +11,7 @@ import org.springframework.validation.annotation.Validated;
 import java.net.URL;
 
 @Validated
-@ConfigurationProperties(prefix = "govsso-inproxy.admin")
+@ConfigurationProperties(prefix = "tara-govsso-inproxy.admin")
 public record AdminConfigurationProperties(
         @NotNull
         URL baseUrl,
@@ -22,7 +22,7 @@ public record AdminConfigurationProperties(
         AdminTlsConfigurationProperties tls) {
 
     @Validated
-    @ConfigurationProperties(prefix = "govsso-inproxy.admin.tls")
+    @ConfigurationProperties(prefix = "tara-govsso-inproxy.admin.tls")
     public record AdminTlsConfigurationProperties(
             @NotNull
             Resource trustStore,

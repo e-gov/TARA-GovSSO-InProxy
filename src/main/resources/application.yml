@@ -1,4 +1,4 @@
-govsso-inproxy:
+tara-govsso-inproxy:
   admin:
     base-url: https://admin.localhost:17443/
     token-request-allowed-ip-addresses-storage-path: ipaddresses
