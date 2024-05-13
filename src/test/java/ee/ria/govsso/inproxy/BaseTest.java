@@ -22,7 +22,9 @@ import static io.restassured.config.RedirectConfig.redirectConfig;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @Slf4j
-@SpringBootTest(webEnvironment = RANDOM_PORT)
+@SpringBootTest(
+        webEnvironment = RANDOM_PORT,
+        classes = { Application.class, MockPropertyBeanConfiguration.class})
 public abstract class BaseTest extends BaseTestLoggingAssertion {
 
     protected static final WireMockServer HYDRA_MOCK_SERVER = new WireMockServer(WireMockConfiguration.wireMockConfig()
