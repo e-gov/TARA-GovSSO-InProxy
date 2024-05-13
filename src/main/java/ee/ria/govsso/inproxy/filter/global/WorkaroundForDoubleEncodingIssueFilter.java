@@ -88,11 +88,14 @@ public class WorkaroundForDoubleEncodingIssueFilter implements GlobalFilter, Ord
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         URI originalUri = exchange.getRequest().getURI();
-        MultiValueMap<String, String> encodedQueryParams = parseRawQueryParams(originalUri.getRawQuery())
-                .map(this::encodeUnencodedSymbols)
-                .collect(LinkedMultiValueMap::new,
-                        (multimap, input) -> multimap.add(input.getKey(), input.getValue()),
-                        MultiValueMap::putAll);
+        MultiValueMap<String, String> encodedQueryParams = new LinkedMultiValueMap<>();
+        if (originalUri.getRawQuery() != null) {
+            encodedQueryParams = parseRawQueryParams(originalUri.getRawQuery())
+                    .map(this::encodeUnencodedSymbols)
+                    .collect(LinkedMultiValueMap::new,
+                            (multimap, input) -> multimap.add(input.getKey(), input.getValue()),
+                            MultiValueMap::putAll);
+        }
 
         URI uri = UriComponentsBuilder.fromUri(originalUri).replaceQueryParams(encodedQueryParams).build(true).toUri();
         return chain.filter(exchange.mutate()
