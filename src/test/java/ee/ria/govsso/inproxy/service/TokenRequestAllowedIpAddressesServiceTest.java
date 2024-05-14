@@ -51,12 +51,12 @@ class TokenRequestAllowedIpAddressesServiceTest extends BaseTest {
 
     @Test
     void admin_TokenRequestAllowedIpAddressesRequestRespondsWith404_IpAddressesFileIsNotChanged() throws IOException {
-        createTokenRequestAllowedIpAddressesFile();
-        tokenRequestAllowedIpAddressesService.loadIpAddressesFromFileIgnoringExceptions();
         ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
                 .willReturn(aResponse()
                         .withStatus(404)));
 
+        createTokenRequestAllowedIpAddressesFile();
+        tokenRequestAllowedIpAddressesService.loadIpAddressesFromFileIgnoringExceptions();
         tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
 
         assertErrorIsLogged("Unable to update the list of allowed IP-address ranges: 404 Not Found from GET https://admin.localhost:17442/clients/tokenrequestallowedipaddresses");
@@ -72,12 +72,12 @@ class TokenRequestAllowedIpAddressesServiceTest extends BaseTest {
 
     @Test
     void admin_TokenRequestAllowedIpAddressesRequestRespondsWithEmptyBody_EmptyResponseIsStoredInMapAndSavedToFile() throws IOException {
-        createTokenRequestAllowedIpAddressesFile();
         ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json; charset=UTF-8")));
 
+        createTokenRequestAllowedIpAddressesFile();
         tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
 
         boolean isTokenRequestAllowed = tokenRequestAllowedIpAddressesService.isTokenRequestAllowed("client-from-file", "1.1.1.1");
