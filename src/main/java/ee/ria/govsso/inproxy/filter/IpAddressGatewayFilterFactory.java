@@ -113,14 +113,22 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
                     && !authorization.equalsIgnoreCase(AUTHENTICATION_SCHEME_BASIC)) {
                 String base64Credentials = authorization.substring(AUTHENTICATION_SCHEME_BASIC.length()).trim();
                 byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
+                // UTF-8 as per https://datatracker.ietf.org/doc/html/rfc6749#appendix-B
                 String[] credentials = new String(credDecoded, StandardCharsets.UTF_8).split(":", 2);
-                return credentials[0];
+                // As per https://datatracker.ietf.org/doc/html/rfc6749#section-2.3.1, this also applies when client_id
+                // and client_secret are used in HTTP Basic authentication:
+                // > The client identifier is encoded using the "application/x-www-form-urlencoded" encoding algorithm
+                // > per Appendix B, and the encoded value is used as the username; the client password is encoded using
+                // > the same algorithm and used as the password.
+                return URLDecoder.decode(credentials[0], StandardCharsets.UTF_8);
             }
         }
         return null;
     }
 
     private String getClientIdFromBody(ServerWebExchange exchange) {
+        // Request body must be application/x-www-form-urlencoded as per https://openid.net/specs/openid-connect-core-1_0.html#FormSerialization
+        // "Content-Type: application/x-www-form-urlencoded" header is not checked.
         String requestBody = exchange.getAttribute(ServerWebExchangeUtils.CACHED_REQUEST_BODY_ATTR);
         if (requestBody != null) {
             Map<String, String> requestBodyMap = parseFormToMap(requestBody);
@@ -138,6 +146,7 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
             for (String pair : pairs) {
                 String[] keyValue = pair.split("=", 2);
                 if (keyValue.length > 1) {
+                    // UTF-8 as per https://datatracker.ietf.org/doc/html/rfc6749#appendix-B
                     String key = URLDecoder.decode(keyValue[0], StandardCharsets.UTF_8);
                     String value = URLDecoder.decode(keyValue[1], StandardCharsets.UTF_8);
                     map.put(key, value);
