@@ -1,6 +1,7 @@
 package ee.ria.govsso.inproxy.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import ee.ria.govsso.inproxy.exception.HydraStyleException;
 import ee.ria.govsso.inproxy.service.TokenRequestAllowedIpAddressesService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -49,36 +50,43 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
-            String clientId = getClientId(exchange);
-            String requestIpAddress;
+            try {
+                String clientId = getClientId(exchange);
+                String requestIpAddress;
 
-            requestIpAddress = exchange.getRequest().getRemoteAddress().getAddress().getHostAddress();
+                requestIpAddress = exchange.getRequest().getRemoteAddress().getAddress().getHostAddress();
 
-            if (clientId == null) {
-                return createErrorResponse(exchange, "invalid_grant", "The provided authorization grant is invalid.");
-            } else if (!tokenRequestAllowedIpAddressesService.isTokenRequestAllowed(clientId, requestIpAddress)) {
-                if(ipBlockEnabled){
-                    return createErrorResponse(exchange, "unauthorized_client", String.format("Your IP address %s is not whitelisted", requestIpAddress));
+                if (clientId == null) {
+                    throw new HydraStyleException(
+                            "invalid_grant", "The provided authorization grant is invalid.", HttpStatus.BAD_REQUEST);
+                } else if (!tokenRequestAllowedIpAddressesService.isTokenRequestAllowed(clientId, requestIpAddress)) {
+                    if(ipBlockEnabled){
+                        throw new HydraStyleException(
+                                "unauthorized_client",
+                                String.format("IP address %s is not whitelisted for client_id \"%s\"", requestIpAddress, clientId),
+                                HttpStatus.BAD_REQUEST);
+                    }
+                    log.warn(String.format("unauthorized_client - IP address %s is not whitelisted for client_id \"%s\", allowing request", requestIpAddress, clientId), exchange);
                 }
-                log.warn(String.format("unauthorized_client - IP address %s is not whitelisted for client_id %s, allowing request", requestIpAddress, clientId), exchange);
+            } catch (HydraStyleException e) {
+                return createErrorResponse(exchange, e);
             }
-
             return chain.filter(exchange);
         };
     }
 
-    private Mono<Void> createErrorResponse(ServerWebExchange exchange, String error, String errorDescription) {
+    private Mono<Void> createErrorResponse(ServerWebExchange exchange, HydraStyleException e) {
         ServerHttpResponse response = exchange.getResponse();
         response.getHeaders().clear();
         response.getHeaders().add(HttpHeaders.CONTENT_TYPE, "application/json");
         response.getHeaders().add(HttpHeaders.CACHE_CONTROL, "no-store");
         response.getHeaders().add(HttpHeaders.PRAGMA, "no-cache");
-        ServerWebExchangeUtils.setResponseStatus(exchange, HttpStatus.BAD_REQUEST);
+        ServerWebExchangeUtils.setResponseStatus(exchange, e.getStatusCode());
         ServerWebExchangeUtils.setAlreadyRouted(exchange);
 
         final Map<String, String> responseBody = Map.of(
-                "error", error,
-                "error_description", errorDescription);
+                "error", e.getError(),
+                "error_description", e.getErrorDescription());
 
         return response.writeWith(jackson2JsonEncoder.encode(Mono.just(responseBody),
                 response.bufferFactory(),
@@ -107,23 +115,39 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
 
     private String getClientIdFromHeader(ServerWebExchange exchange) {
         String authorization = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if (authorization != null) {
-            authorization = authorization.trim();
-            if (authorization.toLowerCase().startsWith(AUTHENTICATION_SCHEME_BASIC)
-                    && !authorization.equalsIgnoreCase(AUTHENTICATION_SCHEME_BASIC)) {
-                String base64Credentials = authorization.substring(AUTHENTICATION_SCHEME_BASIC.length()).trim();
-                byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
-                // UTF-8 as per https://datatracker.ietf.org/doc/html/rfc6749#appendix-B
-                String[] credentials = new String(credDecoded, StandardCharsets.UTF_8).split(":", 2);
-                // As per https://datatracker.ietf.org/doc/html/rfc6749#section-2.3.1, this also applies when client_id
-                // and client_secret are used in HTTP Basic authentication:
-                // > The client identifier is encoded using the "application/x-www-form-urlencoded" encoding algorithm
-                // > per Appendix B, and the encoded value is used as the username; the client password is encoded using
-                // > the same algorithm and used as the password.
-                return URLDecoder.decode(credentials[0], StandardCharsets.UTF_8);
-            }
+        if (authorization == null) {
+            return null;
+        }
+        authorization = authorization.trim();
+        if (authorization.toLowerCase().startsWith(AUTHENTICATION_SCHEME_BASIC)) {
+            return getClientIdFromBasicAuthorization(authorization);
         }
         return null;
+    }
+
+    private static String getClientIdFromBasicAuthorization(String authorization) {
+        String base64Credentials = authorization.substring(AUTHENTICATION_SCHEME_BASIC.length()).trim();
+        try {
+            byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
+            // UTF-8 as per https://datatracker.ietf.org/doc/html/rfc6749#appendix-B
+            String[] credentials = new String(credDecoded, StandardCharsets.UTF_8).split(":", 2);
+            // As per https://datatracker.ietf.org/doc/html/rfc6749#section-2.3.1, this also applies when client_id
+            // and client_secret are used in HTTP Basic authentication:
+            // > The client identifier is encoded using the "application/x-www-form-urlencoded" encoding algorithm
+            // > per Appendix B, and the encoded value is used as the username; the client password is encoded using
+            // > the same algorithm and used as the password.
+            String clientId = URLDecoder.decode(credentials[0], StandardCharsets.UTF_8);
+            if (clientId.isEmpty()) {
+                throw new IllegalArgumentException("Empty client ID");
+            }
+            return clientId;
+        } catch (IllegalArgumentException e) {
+            throw new HydraStyleException(
+                    "invalid_grant",
+                    "The provided authorization grant is invalid.",
+                    HttpStatus.BAD_REQUEST,
+                    e);
+        }
     }
 
     private String getClientIdFromBody(ServerWebExchange exchange) {

@@ -30,7 +30,6 @@ public class TaraHydraOauth2EndpointTest extends BaseTest {
 
     private static final String TRACE_PARENT_PARAMETER_NAME = "traceparent";
     private static final String TRACE_PARENT_PARAMETER_SAMPLE_VALUE = "00f067aa0ba902b7";
-    private static final String AUTHORIZATION_HEADER_NAME = "Authorization";
 
     @Autowired
     private TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService;
@@ -67,7 +66,7 @@ public class TaraHydraOauth2EndpointTest extends BaseTest {
         given()
                 .when()
                 .contentType("application/x-www-form-urlencoded; charset=utf-8")
-                .header("Authorization", "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
+                .header(HttpHeaders.AUTHORIZATION, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
                 .header("X-Forwarded-For", "1.2.3.4")
                 .post("/oidc/token")
                 .then()
@@ -93,7 +92,7 @@ public class TaraHydraOauth2EndpointTest extends BaseTest {
         given()
                 .when()
                 .contentType("application/x-www-form-urlencoded; charset=utf-8")
-                .header("Authorization", "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
+                .header(HttpHeaders.AUTHORIZATION, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
                 .header("X-Forwarded-For", "1.2.3.4")
                 .post("/oidc/token")
                 .then()
@@ -103,7 +102,7 @@ public class TaraHydraOauth2EndpointTest extends BaseTest {
                 .header(HttpHeaders.CACHE_CONTROL, "no-store")
                 .header(HttpHeaders.PRAGMA, "no-cache")
                 .body("error", Matchers.equalTo("unauthorized_client"))
-                .body("error_description", Matchers.equalTo("Your IP address 1.2.3.4 is not whitelisted"));
+                .body("error_description", Matchers.equalTo("IP address 1.2.3.4 is not whitelisted for client_id \"client-a\""));
 
         HYDRA_MOCK_SERVER.verify(exactly(0), postRequestedFor(urlEqualTo("/oauth2/token")));
     }
@@ -134,28 +133,27 @@ public class TaraHydraOauth2EndpointTest extends BaseTest {
             given()
                     .when()
                     .contentType("application/x-www-form-urlencoded; charset=utf-8")
-                    .header("Authorization", "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
+                    .header(HttpHeaders.AUTHORIZATION, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
                     .header("X-Forwarded-For", "1.2.3.4")
                     .post("/oidc/token")
                     .then()
                     .assertThat()
                     .statusCode(200);
 
-            assertWarningIsLogged(IpAddressGatewayFilterFactory.class, "unauthorized_client - IP address 1.2.3.4 is not whitelisted for client_id client-a, allowing request");
+            assertWarningIsLogged(IpAddressGatewayFilterFactory.class, "unauthorized_client - IP address 1.2.3.4 is not whitelisted for client_id \"client-a\", allowing request");
             HYDRA_MOCK_SERVER.verify(exactly(1), postRequestedFor(urlEqualTo("/oauth2/token")));
         }
 
     }
 
-    //TODO Add more tests for odd authorization header cases
     @ParameterizedTest
-    @ValueSource(strings = {"Basic", ""})
+    @ValueSource(strings = {"Basic", "Basic ", ""})
     void hydra_oAuthTokenRequestIncorrectAuthorizationHeader_Returns400Error(String authorizationHeader) {
 
         given()
                 .when()
                 .contentType("application/x-www-form-urlencoded; charset=utf-8")
-                .header("Authorization", authorizationHeader)
+                .header(HttpHeaders.AUTHORIZATION, authorizationHeader)
                 .post("/oidc/token")
                 .then()
                 .assertThat()
@@ -216,7 +214,7 @@ public class TaraHydraOauth2EndpointTest extends BaseTest {
                 .when()
                 .contentType("application/x-www-form-urlencoded; charset=utf-8")
                 .header("X-Forwarded-For", "1.2.3.4")
-                .header("Authorization", "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
+                .header(HttpHeaders.AUTHORIZATION, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
                 .body(requestBody)
                 .post("/oidc/token")
                 .then()
@@ -235,7 +233,7 @@ public class TaraHydraOauth2EndpointTest extends BaseTest {
                 .when()
                 .contentType("application/x-www-form-urlencoded; charset=utf-8")
                 .header("X-Forwarded-For", "1.2.3.4")
-                .header("Authorization", "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
+                .header(HttpHeaders.AUTHORIZATION, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
                 .body(requestBody)
                 .post("/oidc/token")
                 .then()
@@ -332,7 +330,7 @@ public class TaraHydraOauth2EndpointTest extends BaseTest {
         tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
 
         given()
-                .header(AUTHORIZATION_HEADER_NAME, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
+                .header(HttpHeaders.AUTHORIZATION, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
                 .header("X-Forwarded-For", "1.1.1.1")
                 .when()
                 .get("/oidc/token")
@@ -341,7 +339,7 @@ public class TaraHydraOauth2EndpointTest extends BaseTest {
                 .statusCode(200);
 
         HYDRA_MOCK_SERVER.verify(getRequestedFor(urlPathEqualTo("/oauth2/token"))
-                .withHeader(AUTHORIZATION_HEADER_NAME, equalTo("Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")));
+                .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")));
     }
 
     @Test

@@ -14,6 +14,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
+import java.util.Base64;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.exactly;
@@ -24,6 +26,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static io.restassured.RestAssured.given;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hamcrest.Matchers.equalToCompressingWhiteSpace;
 
 @ActiveProfiles({"govsso"})
@@ -33,7 +36,6 @@ public class GovSsoHydraOauth2EndpointTest extends BaseTest {
     private static final String TRACE_PARENT_PARAMETER_SAMPLE_VALUE = "00f067aa0ba902b7";
     private static final String PROMPT_PARAMETER_NAME = "prompt";
     private static final String PROMPT_PARAMETER_CONSENT_VALUE = "consent";
-    private static final String AUTHORIZATION_HEADER_NAME = "Authorization";
 
     @Autowired
     private TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService;
@@ -75,7 +77,7 @@ public class GovSsoHydraOauth2EndpointTest extends BaseTest {
         given()
                 .when()
                 .contentType("application/x-www-form-urlencoded; charset=utf-8")
-                .header("Authorization", "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
+                .header(HttpHeaders.AUTHORIZATION, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
                 .header("X-Forwarded-For", "1.2.3.4")
                 .post("/oauth2/token")
                 .then()
@@ -101,7 +103,7 @@ public class GovSsoHydraOauth2EndpointTest extends BaseTest {
         given()
                 .when()
                 .contentType("application/x-www-form-urlencoded; charset=utf-8")
-                .header("Authorization", "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
+                .header(HttpHeaders.AUTHORIZATION, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
                 .header("X-Forwarded-For", "1.2.3.4")
                 .post("/oauth2/token")
                 .then()
@@ -111,7 +113,7 @@ public class GovSsoHydraOauth2EndpointTest extends BaseTest {
                 .header(HttpHeaders.CACHE_CONTROL, "no-store")
                 .header(HttpHeaders.PRAGMA, "no-cache")
                 .body("error", Matchers.equalTo("unauthorized_client"))
-                .body("error_description", Matchers.equalTo("Your IP address 1.2.3.4 is not whitelisted"));
+                .body("error_description", Matchers.equalTo("IP address 1.2.3.4 is not whitelisted for client_id \"client-a\""));
 
         HYDRA_MOCK_SERVER.verify(exactly(0), postRequestedFor(urlEqualTo("/oauth2/token")));
     }
@@ -142,28 +144,27 @@ public class GovSsoHydraOauth2EndpointTest extends BaseTest {
             given()
                     .when()
                     .contentType("application/x-www-form-urlencoded; charset=utf-8")
-                    .header("Authorization", "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
+                    .header(HttpHeaders.AUTHORIZATION, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
                     .header("X-Forwarded-For", "1.2.3.4")
                     .post("/oauth2/token")
                     .then()
                     .assertThat()
                     .statusCode(200);
 
-            assertWarningIsLogged(IpAddressGatewayFilterFactory.class, "unauthorized_client - IP address 1.2.3.4 is not whitelisted for client_id client-a, allowing request");
+            assertWarningIsLogged(IpAddressGatewayFilterFactory.class, "unauthorized_client - IP address 1.2.3.4 is not whitelisted for client_id \"client-a\", allowing request");
             HYDRA_MOCK_SERVER.verify(exactly(1), postRequestedFor(urlEqualTo("/oauth2/token")));
         }
 
     }
 
-    //TODO Add more tests for odd authorization header cases
     @ParameterizedTest
-    @ValueSource(strings = {"Basic", ""})
+    @ValueSource(strings = {"Basic", "Basic ", "Basic ThisIsNotAProperBase64String!", ""})
     void hydra_oAuthTokenRequestIncorrectAuthorizationHeader_Returns400Error(String authorizationHeader) {
 
         given()
                 .when()
                 .contentType("application/x-www-form-urlencoded; charset=utf-8")
-                .header("Authorization", authorizationHeader)
+                .header(HttpHeaders.AUTHORIZATION, authorizationHeader)
                 .post("/oauth2/token")
                 .then()
                 .assertThat()
@@ -224,7 +225,7 @@ public class GovSsoHydraOauth2EndpointTest extends BaseTest {
                 .when()
                 .contentType("application/x-www-form-urlencoded; charset=utf-8")
                 .header("X-Forwarded-For", "1.2.3.4")
-                .header("Authorization", "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
+                .header(HttpHeaders.AUTHORIZATION, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
                 .body(requestBody)
                 .post("/oauth2/token")
                 .then()
@@ -243,7 +244,7 @@ public class GovSsoHydraOauth2EndpointTest extends BaseTest {
                 .when()
                 .contentType("application/x-www-form-urlencoded; charset=utf-8")
                 .header("X-Forwarded-For", "1.2.3.4")
-                .header("Authorization", "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
+                .header(HttpHeaders.AUTHORIZATION, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
                 .body(requestBody)
                 .post("/oauth2/token")
                 .then()
@@ -420,7 +421,7 @@ public class GovSsoHydraOauth2EndpointTest extends BaseTest {
         tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
 
         given()
-                .header(AUTHORIZATION_HEADER_NAME, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
+                .header(HttpHeaders.AUTHORIZATION, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
                 .header("X-Forwarded-For", "1.1.1.1")
                 .when()
                 .get("/oauth2/token")
@@ -429,7 +430,7 @@ public class GovSsoHydraOauth2EndpointTest extends BaseTest {
                 .statusCode(200);
 
         HYDRA_MOCK_SERVER.verify(getRequestedFor(urlPathEqualTo("/oauth2/token"))
-                .withHeader(AUTHORIZATION_HEADER_NAME, equalTo("Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")));
+                .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")));
     }
 
     @Test
@@ -444,4 +445,103 @@ public class GovSsoHydraOauth2EndpointTest extends BaseTest {
 
         HYDRA_MOCK_SERVER.verify(getRequestedFor(urlEqualTo("/oauth2/auth?state=FG6kE8S5SaU1%3D&redirect_uri=https://clienta.localhost:11443/login/oauth2/code/govsso&prompt=consent")));
     }
+
+    @Test
+    void hydra_clientIdContainsEncodedCharacters_ItIsProperlyDecoded() {
+        String clientId = "Client ä: (x+y=z)";
+        // Spaces (" ") can be encoded as either plus sign ("+") or "%20", so lets use both options
+        String clientIdXWwwFormUrlEncoded = "Client+%C3%A4%3A%20%28x%2By%3Dz%29";
+        ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBody("{\"" + clientId + "\":[\"1.1.1.1\"]}")));
+
+        HYDRA_MOCK_SERVER.stubFor(get(urlEqualTo("/oauth2/token"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/hydra_token.json")));
+
+        tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
+
+        String clientIdSecretPair = clientIdXWwwFormUrlEncoded + ":ignored-secret";
+        String authorization = new String(Base64.getEncoder().encode(clientIdSecretPair.getBytes(UTF_8)), UTF_8);
+
+        given()
+                .header(HttpHeaders.AUTHORIZATION, "Basic " + authorization)
+                .header("X-Forwarded-For", "1.1.1.1")
+                .when()
+                .get("/oauth2/token")
+                .then()
+                .assertThat()
+                .statusCode(200);
+
+        HYDRA_MOCK_SERVER.verify(getRequestedFor(urlPathEqualTo("/oauth2/token"))
+                .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Basic " + authorization)));
+    }
+
+    @Test
+    void hydra_clientIdContainsCharactersThatShouldBeEncodedButDoNotHaveOtherMeaning_TheseCharactersAreKept() {
+        String clientId = "Client ä%25: (x+y=z)";
+        // Plus symbol ("+") MUST be encoded, otherwise it would be decoded to space (" ").
+        // Colon (":") MUST be encoded as it is used as a separator between client ID and client secret.
+        // Percent sign ("%") MUST be encoded as it is used as the start of an escape sequence.
+        String clientIdXWwwFormUrlEncoded = "Client ä%2525%3A (x%2By=z)";
+        ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBody("{\"" + clientId + "\":[\"1.1.1.1\"]}")));
+
+        HYDRA_MOCK_SERVER.stubFor(get(urlEqualTo("/oauth2/token"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBodyFile("mock_responses/hydra_token.json")));
+
+        tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
+
+        String clientIdSecretPair = clientIdXWwwFormUrlEncoded + ":ignored-secret";
+        String authorization = new String(Base64.getEncoder().encode(clientIdSecretPair.getBytes(UTF_8)), UTF_8);
+
+        given()
+                .header(HttpHeaders.AUTHORIZATION, "Basic " + authorization)
+                .header("X-Forwarded-For", "1.1.1.1")
+                .when()
+                .get("/oauth2/token")
+                .then()
+                .assertThat()
+                .statusCode(200);
+
+        HYDRA_MOCK_SERVER.verify(getRequestedFor(urlPathEqualTo("/oauth2/token"))
+                .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Basic " + authorization)));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"Client:A", "Client+A", "Client%A"})
+    void hydra_clientIdContainsCharactersThatMustBeEncoded_ErrorReturned(String clientId) {
+        ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json; charset=UTF-8")
+                        .withBody("{\"" + clientId + "\":[\"1.1.1.1\"]}")));
+
+        tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
+
+        String clientIdSecretPair = clientId + ":ignored-secret";
+        String authorization = new String(Base64.getEncoder().encode(clientIdSecretPair.getBytes(UTF_8)), UTF_8);
+
+        given()
+                .header(HttpHeaders.AUTHORIZATION, "Basic " + authorization)
+                .header("X-Forwarded-For", "1.1.1.1")
+                .when()
+                .get("/oauth2/token")
+                .then()
+                .assertThat()
+                .statusCode(400);
+
+        HYDRA_MOCK_SERVER.verify(exactly(0), getRequestedFor(urlPathEqualTo("/oauth2/token")));
+    }
+
 }
