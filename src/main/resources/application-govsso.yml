@@ -1,3 +1,9 @@
+server:
+  netty:
+    # Support long request URL-s required by RP initiated logout requests where id_token_hint parameter is an ID token
+    # containing a long representee_list claim value.
+    max-initial-line-length: 128KB
+
 spring:
   application:
     name: govsso-inproxy
