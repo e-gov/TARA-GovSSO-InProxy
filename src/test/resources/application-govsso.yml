@@ -1,3 +1,7 @@
+server:
+  netty:
+    max-initial-line-length: 128KB
+
 spring:
   application:
     name: govsso-inproxy

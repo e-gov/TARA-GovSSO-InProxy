@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.util.unit.DataSize;
 
 import java.io.File;
 
@@ -34,6 +35,7 @@ public abstract class BaseTest extends BaseTestLoggingAssertion {
             .keystorePassword("changeit")
             .keyManagerPassword("changeit")
             .notifier(new ConsoleNotifier(true))
+            .jettyHeaderRequestSize((int) DataSize.ofMegabytes(1).toBytes())
     );
     protected static final WireMockServer SESSION_MOCK_SERVER = new WireMockServer(WireMockConfiguration.wireMockConfig()
             .httpDisabled(true)
