@@ -48,6 +48,7 @@ spring:
             - Path=/oauth2/sessions/logout
           filters:
             - TraceParent
+            - LogoutValidator
         - id: oauth2-token
           uri: lb://hydra
           predicates:
