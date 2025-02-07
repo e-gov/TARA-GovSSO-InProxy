@@ -25,7 +25,7 @@ import static org.springframework.cloud.gateway.filter.RouteToRequestUrlFilter.R
 
 // org.springframework.web.util.HierarchicalUriComponents does not allow unencoded = in query parameter value, which is
 // stricter than RFC 3986. When Spring Cloud Gateway encounters such query parameter values, it assumes that all query
-// parameters are unencoded and encodes all query parameters, which is incorrent
+// parameters are unencoded and encodes all query parameters, which is incorrect
 // (https://github.com/spring-cloud/spring-cloud-gateway/issues/2065). This filter is applied before Spring Cloud
 // Gateway's query parameter logic and this filter ensures that query parameters are encoded according to stricter rules
 // so that Spring Cloud Gateway's bug is not triggered.
