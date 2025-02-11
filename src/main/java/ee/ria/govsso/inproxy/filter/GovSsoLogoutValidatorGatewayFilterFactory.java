@@ -1,9 +1,15 @@
 package ee.ria.govsso.inproxy.filter;
 
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
+import ee.ria.govsso.inproxy.configuration.properties.GovSsoConfigurationProperties;
+import ee.ria.govsso.inproxy.exception.HydraStyleException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hc.core5.net.URIBuilder;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -13,66 +19,108 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
-import java.util.Base64;
+import java.text.ParseException;
+import java.util.List;
 
 @Slf4j
 @Component
+@Profile("govsso")
 public class GovSsoLogoutValidatorGatewayFilterFactory extends AbstractGatewayFilterFactory<GovSsoLogoutValidatorGatewayFilterFactory.Config> {
 
-    public GovSsoLogoutValidatorGatewayFilterFactory() {
+    private final GovSsoConfigurationProperties govSsoConfigurationProperties;
+
+    public GovSsoLogoutValidatorGatewayFilterFactory(GovSsoConfigurationProperties govSsoConfigurationProperties) {
         super(Config.class);
+        this.govSsoConfigurationProperties = govSsoConfigurationProperties;
     }
 
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
-            MultiValueMap<String, String> queryParams = exchange.getRequest()
-                    .getQueryParams();
-
-            String idToken = getFirstIdTokenValue(queryParams);
-
-            if (idToken != null && !idToken.isEmpty() && exchange.getRequest().getMethod().equals(HttpMethod.GET)) {
-                String idTokenPayload = getIdTokenPayload(idToken);
-
-                if (idTokenPayload != null && idTokenPayload.contains("representee_list")) {
-                    return createErrorResponse(exchange, "Logout+request+must+use+POST+method+if+the+id+token+from+%27id_token_hint%27+parameter+contains+a+%27representee_list%27+claim");
-                }
-            } else if (idToken != null && !idToken.isEmpty() && exchange.getRequest().getMethod().equals(HttpMethod.POST)) {
-                return createErrorResponse(exchange, "The+%27id_token_hint%27+query+parameter+is+not+allowed+when+using+logout+request+with+http+POST+method%2C+it+must+be+passed+as+a+form+parameter");
+            try {
+                validateIdTokenHintQueryParam(exchange);
+                return chain.filter(exchange);
+            } catch (HydraStyleException e) {
+                return createErrorResponse(exchange, e);
             }
-
-            return chain.filter(exchange);
         };
     }
 
-    private static String getIdTokenPayload(String idToken) {
-        try {
-            String[] chunks = idToken.split("\\.", 3);
-            Base64.Decoder decoder = Base64.getUrlDecoder();
-            if (chunks.length > 1) {
-                return new String(decoder.decode(chunks[1]));
-            } else {
-                return null;
+    private void validateIdTokenHintQueryParam(ServerWebExchange exchange) {
+        MultiValueMap<String, String> queryParams = exchange.getRequest()
+                .getQueryParams();
+        String idToken = getIdTokenQueryParam(queryParams);
+        if (idToken == null) {
+            return;
+        }
+        if (exchange.getRequest().getMethod().equals(HttpMethod.POST)) {
+            throw new HydraStyleException(
+                    HydraStyleException.INVALID_REQUEST,
+                    "The 'id_token_hint' query parameter is not allowed when using logout request with http POST method, it must be passed as a form parameter");
+        }
+        if (exchange.getRequest().getMethod().equals(HttpMethod.GET)) {
+            JWTClaimsSet jwtClaims;
+            try {
+                // Warning: The JWT signature is NOT verified, which is fine, but needs to be kept in mind when
+                // using its data.
+                SignedJWT jwt = SignedJWT.parse(idToken);
+                jwtClaims = jwt.getJWTClaimsSet();
+            } catch (ParseException e) {
+                throw new HydraStyleException(
+                        HydraStyleException.INVALID_REQUEST,
+                        "The 'id_token_hint' query parameter value is not a valid JWS");
             }
-        } catch (IllegalArgumentException e) {
-            log.info("Unable to decode URL-encoded string: ", e);
+            if (jwtClaims.getClaim("representee_list") == null) {
+                return;
+            }
+            String clientId = getClientId(jwtClaims);
+            if (!allowRepresenteeListScopeQueryParam(clientId)) {
+                throw new HydraStyleException(
+                        HydraStyleException.INVALID_REQUEST,
+                        "Logout request must use POST method if the id token from 'id_token_hint' parameter contains a 'representee_list' claim");
+            }
+        }
+    }
+
+    private String getClientId(JWTClaimsSet jwtClaimsSet) {
+        List<String> audience = jwtClaimsSet.getAudience();
+        if (audience.isEmpty()) {
+            throw new IllegalArgumentException("Can not determine client ID, no audience provided");
+        }
+        if (audience.size() != 1) {
+            throw new IllegalArgumentException("Can not determine client ID, multiple audience claim values found");
+        }
+        return audience.get(0);
+    }
+
+    private String getIdTokenQueryParam(MultiValueMap<String, String> map) {
+        List<String> idTokenHints = map.getOrDefault("id_token_hint", List.of());
+        if(idTokenHints.isEmpty()) {
             return null;
         }
-    }
-
-    private String getFirstIdTokenValue(MultiValueMap<String, String> map) {
-        for (String k : map.keySet()) {
-            if (k.equals("id_token_hint")) {
-                return map.getFirst(k);
-            }
+        if(idTokenHints.size() > 1) {
+            throw new HydraStyleException(
+                    HydraStyleException.INVALID_REQUEST,
+                    "Multiple 'id_token_hint' query parameters found");
         }
-        return null;
+        return idTokenHints.get(0);
     }
 
-    private Mono<Void> createErrorResponse(ServerWebExchange exchange, String message) {
+    private boolean allowRepresenteeListScopeQueryParam(String clientId) {
+        return govSsoConfigurationProperties.getAllowLogoutRepresenteeListScopeQueryParam()
+                .getClientIds()
+                .contains(clientId);
+    }
+
+    private Mono<Void> createErrorResponse(ServerWebExchange exchange, HydraStyleException e) {
+        String location = new URIBuilder()
+                .appendPathSegments("error", "oidc")
+                .addParameter("error", e.getError())
+                .addParameter("error_description", e.getErrorDescription())
+                .toString();
         ServerHttpResponse response = exchange.getResponse();
         response.getHeaders().clear();
-        response.getHeaders().add(HttpHeaders.LOCATION, "/error/oidc?error=invalid_request&error_description=" + message);
+        response.getHeaders().add(HttpHeaders.LOCATION, location);
         response.getHeaders().add(HttpHeaders.CACHE_CONTROL, "private, no-cache, no-store, must-revalidate");
         ServerWebExchangeUtils.setResponseStatus(exchange, HttpStatus.FOUND);
         ServerWebExchangeUtils.setAlreadyRouted(exchange);

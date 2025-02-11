@@ -36,6 +36,7 @@
         <spring-cloud.version>2023.0.3</spring-cloud.version> <!-- Spring Cloud 2023.0.x release train is only compatible with Spring Boot 3.2.x and 3.3.x, see table 1 at https://spring.io/projects/spring-cloud -->
         <wiremock.version>3.9.2</wiremock.version>
         <ipaddress.version>5.5.1</ipaddress.version>
+        <nimbus-oauth2-oidc-sdk.version>11.20.1</nimbus-oauth2-oidc-sdk.version>
     </properties>
 
     <dependencyManagement>
@@ -71,6 +72,11 @@
             <version>${ipaddress.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>oauth2-oidc-sdk</artifactId>
+            <version>${nimbus-oauth2-oidc-sdk.version}</version>
+        </dependency>
+        <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
             <version>${logstash-logback-encoder.version}</version>
@@ -78,6 +84,10 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents.core5</groupId>
+            <artifactId>httpcore5</artifactId>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
