@@ -17,9 +17,9 @@ import java.util.Base64;
 
 @Slf4j
 @Component
-public class LogoutValidatorGatewayFilterFactory extends AbstractGatewayFilterFactory<LogoutValidatorGatewayFilterFactory.Config> {
+public class GovSsoLogoutValidatorGatewayFilterFactory extends AbstractGatewayFilterFactory<GovSsoLogoutValidatorGatewayFilterFactory.Config> {
 
-    public LogoutValidatorGatewayFilterFactory() {
+    public GovSsoLogoutValidatorGatewayFilterFactory() {
         super(Config.class);
     }
 
