@@ -75,3 +75,9 @@ spring:
           uri: lb://session
           predicates:
             - Path=/**
+
+tara-govsso-inproxy:
+  govsso:
+    allow-logout-representee-list-scope-query-param:
+      client-ids:
+        - special-backwards-compatibility-logout-client
