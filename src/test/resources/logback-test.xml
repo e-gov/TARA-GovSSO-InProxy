@@ -13,6 +13,15 @@
         </encoder>
     </appender>
 
+    <appender name="accesslog" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="reactor.netty.http.server.AccessLog" level="INFO" additivity="false">
+        <appender-ref ref="accesslog"/>
+    </logger>
     <!-- Decrease the amount of logs from Jetty started by WireMock -->
     <logger name="org.eclipse.jetty" level="INFO"/>
     <logger name="ee.ria.govsso.inproxy" level="DEBUG"/>

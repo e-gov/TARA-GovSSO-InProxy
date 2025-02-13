@@ -71,3 +71,4 @@ tara-govsso-inproxy:
       trust-store: classpath:inproxy.localhost.admin.truststore.p12
       trust-store-password: changeit
   token-request-block-ip-addresses: true
+  enable-access-log: true

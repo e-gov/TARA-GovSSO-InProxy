@@ -15,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
@@ -32,6 +33,7 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
 
     public static final String AUTHENTICATION_SCHEME_BASIC = "basic";
     public static final String REQUEST_BODY_FORM_ELEMENT_KEY = "client_id";
+    public static final String X_CLIENT_ID_HEADER = "X-ClientId";
 
     private final TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService;
     private final Jackson2JsonEncoder jackson2JsonEncoder;
@@ -50,17 +52,15 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
+            String clientId = null;
             try {
-                String clientId = getClientId(exchange);
-                String requestIpAddress;
-
-                requestIpAddress = exchange.getRequest().getRemoteAddress().getAddress().getHostAddress();
-
+                String requestIpAddress = exchange.getRequest().getRemoteAddress().getAddress().getHostAddress();
+                clientId = getClientId(exchange);
                 if (clientId == null) {
                     throw new HydraStyleException(
                             "invalid_grant", "The provided authorization grant is invalid.", HttpStatus.BAD_REQUEST);
                 } else if (!tokenRequestAllowedIpAddressesService.isTokenRequestAllowed(clientId, requestIpAddress)) {
-                    if(ipBlockEnabled){
+                    if (ipBlockEnabled){
                         throw new HydraStyleException(
                                 "unauthorized_client",
                                 String.format("IP address %s is not whitelisted for client_id \"%s\"", requestIpAddress, clientId),
@@ -68,11 +68,21 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
                     }
                     log.warn(String.format("unauthorized_client - IP address %s is not whitelisted for client_id \"%s\", allowing request", requestIpAddress, clientId), exchange);
                 }
+
+                // Adding X-ClientId header for Netty accesslog
+                return chain.filter(addXClientIdHeader(clientId, exchange));
             } catch (HydraStyleException e) {
-                return createErrorResponse(exchange, e);
+                return createErrorResponse(addXClientIdHeader(clientId, exchange), e);
             }
-            return chain.filter(exchange);
         };
+    }
+
+    private ServerWebExchange addXClientIdHeader(String clientId, ServerWebExchange exchange)  {
+        // The header is only used internally within the inproxy to pass information between components; while it’s included in requests to Hydra, Hydra doesn’t need it
+        ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
+            .header(X_CLIENT_ID_HEADER, clientId)
+            .build();
+        return exchange.mutate().request(mutatedRequest).build();
     }
 
     private Mono<Void> createErrorResponse(ServerWebExchange exchange, HydraStyleException e) {

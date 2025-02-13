@@ -1,8 +1,10 @@
 package ee.ria.govsso.inproxy;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ee.ria.govsso.inproxy.filter.IpAddressGatewayFilterFactory;
 import ee.ria.govsso.inproxy.service.TokenRequestAllowedIpAddressesService;
 import ee.ria.govsso.inproxy.util.TestUtils;
+import java.util.List;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -25,8 +27,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalToCompressingWhiteSpace;
+
+
 @ActiveProfiles({"tara"})
-public class TaraHydraOauth2EndpointTest extends BaseTest {
+class TaraHydraOauth2EndpointTest extends BaseTest {
 
     private static final String TRACE_PARENT_PARAMETER_NAME = "traceparent";
     private static final String TRACE_PARENT_PARAMETER_SAMPLE_VALUE = "00f067aa0ba902b7";
@@ -144,6 +148,31 @@ public class TaraHydraOauth2EndpointTest extends BaseTest {
             HYDRA_MOCK_SERVER.verify(exactly(1), postRequestedFor(urlEqualTo("/oauth2/token")));
         }
 
+        @Test
+        void hydra_oAuthTokenRequestHasEmptyXClientIdHeaderAndCorrectAccessLog_Returns400() {
+            String responseBody = String.format("{\"client-a\":[\"%s\"]}", "1.2.3.4");
+
+            ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
+                .willReturn(aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json; charset=UTF-8")
+                    .withBody(responseBody)));
+
+            tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
+
+            given()
+                .when()
+                .contentType("application/x-www-form-urlencoded; charset=utf-8")
+                .header("X-Forwarded-For", "1.2.3.4")
+                .header("X-ClientId", "client-b") // accesslog should have client-a
+                .post("/oidc/token")
+                .then()
+                .assertThat()
+                .statusCode(400);
+
+            List<ILoggingEvent> logEntries = assertAccessLogIsLogged("-"); // checks if accesslog contains this string
+            assertCorrectAccessLogFormat(logEntries, "-");
+        }
     }
 
     @ParameterizedTest
@@ -353,5 +382,146 @@ public class TaraHydraOauth2EndpointTest extends BaseTest {
                 .get("/oidc/authorize");
 
         HYDRA_MOCK_SERVER.verify(getRequestedFor(urlEqualTo("/oauth2/auth?state=FG6kE8S5SaU1%3D&redirect_uri=https://clienta.localhost:11443/login/oauth2/code/govsso")));
+    }
+
+    @Test
+    void hydra_oAuthTokenRequestHasXClientIdHeaderAddedFromBodyValue_Returns200() {
+        String requestBody = "client_id=client-a";
+        String responseBody = String.format("{\"client-a\":[\"%s\"]}", "1.2.3.4");
+
+        ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
+            .willReturn(aResponse()
+                .withStatus(200)
+                .withHeader("Content-Type", "application/json; charset=UTF-8")
+                .withBody(responseBody)));
+
+        tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
+
+        String expectedResponse = TestUtils.getResourceAsString("__files/mock_responses/hydra_token.json");
+        given()
+            .when()
+            .contentType("application/x-www-form-urlencoded; charset=utf-8")
+            .header("X-Forwarded-For", "1.2.3.4")
+            .body(requestBody)
+            .post("/oidc/token")
+            .then()
+            .assertThat()
+            .statusCode(200)
+            .body(equalToCompressingWhiteSpace(expectedResponse));
+
+        HYDRA_MOCK_SERVER.verify(exactly(1), postRequestedFor(urlEqualTo("/oauth2/token")));
+
+        List<ILoggingEvent> logEntries = assertAccessLogIsLogged("client-a"); // checks if accesslog contains this string
+        assertCorrectAccessLogFormat(logEntries, "client-a");
+    }
+
+    @Test
+    void hydra_oAuthTokenRequestHasXClientIdHeaderAddedFromHeaderValue_Returns200() {
+        ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
+            .willReturn(aResponse()
+                .withStatus(200)
+                .withHeader("Content-Type", "application/json; charset=UTF-8")
+                .withBody("{\"client-a\":[\"1.2.3.4\"]}")));
+
+        HYDRA_MOCK_SERVER.stubFor(get(urlEqualTo("/oauth2/token"))
+            .willReturn(aResponse()
+                .withStatus(200)
+                .withHeader("Content-Type", "application/json; charset=UTF-8")
+                .withBodyFile("mock_responses/hydra_token.json")));
+
+        tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
+
+        String expectedResponse = TestUtils.getResourceAsString("__files/mock_responses/hydra_token.json");
+        given()
+            .header(HttpHeaders.AUTHORIZATION, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
+            .when()
+            .contentType("application/x-www-form-urlencoded; charset=utf-8")
+            .header("X-Forwarded-For", "1.2.3.4")
+            .post("/oidc/token")
+            .then()
+            .assertThat()
+            .statusCode(200)
+            .body(equalToCompressingWhiteSpace(expectedResponse));
+
+        HYDRA_MOCK_SERVER.verify(exactly(1), postRequestedFor(urlEqualTo("/oauth2/token")));
+
+        List<ILoggingEvent> logEntries = assertAccessLogIsLogged("client-a"); // checks if accesslog contains this string
+        assertCorrectAccessLogFormat(logEntries,"client-a");
+    }
+
+    @Test
+    void hydra_oAuthTokenRequestHasXClientIdHeaderAddedFromActualClientId_Returns200() {
+        String requestBody = "client_id=client-a";
+        String responseBody = String.format("{\"client-a\":[\"%s\"]}", "1.2.3.4");
+
+        ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
+            .willReturn(aResponse()
+                .withStatus(200)
+                .withHeader("Content-Type", "application/json; charset=UTF-8")
+                .withBody(responseBody)));
+
+        tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
+
+        String expectedResponse = TestUtils.getResourceAsString("__files/mock_responses/hydra_token.json");
+        given()
+            .when()
+            .contentType("application/x-www-form-urlencoded; charset=utf-8")
+            .header("X-Forwarded-For", "1.2.3.4")
+            .header("X-ClientId", "client-b") // accesslog should have client-a
+            .body(requestBody)
+            .post("/oidc/token")
+            .then()
+            .assertThat()
+            .statusCode(200)
+            .body(equalToCompressingWhiteSpace(expectedResponse));
+
+        HYDRA_MOCK_SERVER.verify(exactly(1), postRequestedFor(urlEqualTo("/oauth2/token")));
+
+        List<ILoggingEvent> logEntries = assertAccessLogIsLogged("client-a"); // checks if accesslog contains this string
+        assertCorrectAccessLogFormat(logEntries, "client-a");
+    }
+
+    @Nested
+    @TestPropertySource(properties = "tara-govsso-inproxy.enable-access-log=false")
+    class AccessLogDisabledTests extends BaseTest {
+
+        @Autowired
+        private TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService;
+
+        @BeforeEach
+        void setupServerMocks() {
+            TaraHydraOauth2EndpointTest.this.setupServerMocks();
+        }
+
+        @Test
+        void hydra_oAuthTokenRequestHasXClientIdHeaderAddedAccessLogDisabled_Returns200() {
+            String requestBody = "client_id=client-a";
+            String responseBody = String.format("{\"client-a\":[\"%s\"]}", "1.2.3.4");
+
+            ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
+                .willReturn(aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json; charset=UTF-8")
+                    .withBody(responseBody)));
+
+            tokenRequestAllowedIpAddressesService.updateAllowedIpsTask();
+
+            String expectedResponse = TestUtils.getResourceAsString("__files/mock_responses/hydra_token.json");
+            given()
+                .when()
+                .contentType("application/x-www-form-urlencoded; charset=utf-8")
+                .header("X-Forwarded-For", "1.2.3.4")
+                .header("X-ClientId", "client-a")
+                .body(requestBody)
+                .post("/oidc/token")
+                .then()
+                .assertThat()
+                .statusCode(200)
+                .body(equalToCompressingWhiteSpace(expectedResponse));
+
+            HYDRA_MOCK_SERVER.verify(exactly(1), postRequestedFor(urlEqualTo("/oauth2/token")));
+
+            assertAccessLogMessageIsNotLogged("client-a");
+        }
     }
 }
