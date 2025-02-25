@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.6</version>
+        <version>3.3.9</version>
         <relativePath/><!-- Lookup parent from repository. -->
     </parent>
 
@@ -33,10 +33,11 @@
         <elastic-apm.version>1.52.1</elastic-apm.version>
         <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
         <logstash-logback-encoder.version>8.0</logstash-logback-encoder.version>
-        <spring-cloud.version>2023.0.3</spring-cloud.version> <!-- Spring Cloud 2023.0.x release train is only compatible with Spring Boot 3.2.x and 3.3.x, see table 1 at https://spring.io/projects/spring-cloud -->
-        <wiremock.version>3.9.2</wiremock.version>
+        <spring-cloud.version>2023.0.5</spring-cloud.version> <!-- Spring Cloud 2023.0.x release train is only compatible with Spring Boot 3.2.x and 3.3.x, see table 1 at https://spring.io/projects/spring-cloud -->
+        <wiremock.version>3.12.0</wiremock.version>
         <ipaddress.version>5.5.1</ipaddress.version>
-        <nimbus-oauth2-oidc-sdk.version>11.20.1</nimbus-oauth2-oidc-sdk.version>
+        <nimbus-oauth2-oidc-sdk.version>11.23.1</nimbus-oauth2-oidc-sdk.version>
+        <logback.version>1.5.12</logback.version> <!-- TODO AUT-2145 Newer Logback version requires resolving "Invalid [pattern]" error regarding "#asLong{%property{PID}}" logback-spring.xml configuration and resolving https://logback.qos.ch/manual/filters.html#JaninoEventEvaluator -->
     </properties>
 
     <dependencyManagement>
