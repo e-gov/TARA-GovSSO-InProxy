@@ -2,8 +2,10 @@ package ee.ria.govsso.inproxy.filter;
 
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.server.ServerWebExchange;
 
 @Component
 public class TraceParentGatewayFilterFactory extends AbstractGatewayFilterFactory<TraceParentGatewayFilterFactory.Config> {
@@ -22,8 +24,9 @@ public class TraceParentGatewayFilterFactory extends AbstractGatewayFilterFactor
             String traceParentValue = getFirstTraceParentValueIgnoringCase(queryParams);
 
             if (traceParentValue != null && !traceParentValue.isEmpty()) {
-                exchange.getRequest().mutate()
-                        .headers(headers -> headers.add(TRACE_PARENT_PARAMETER_NAME, traceParentValue));
+                return chain.filter(exchange.mutate()
+                    .request(request -> request.header(TRACE_PARENT_PARAMETER_NAME, traceParentValue))
+                    .build());
             }
             return chain.filter(exchange);
         };

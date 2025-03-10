@@ -52,7 +52,7 @@
                         {
                         "log.level": "%level",
                         "log.logger": "%logger",
-                        "process.pid": "#asLong{%property{PID}}",
+                        "process.pid": "#asLong{${PID}}",
                         "process.thread.name": "%thread",
                         "service.type": "${log.service.type}"
                         }

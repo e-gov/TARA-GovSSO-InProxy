@@ -2,6 +2,7 @@ package ee.ria.govsso.inproxy.actuator.health.certificates;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.health.CompositeHealthContributor;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
@@ -38,17 +39,16 @@ public class CertificatesHealthConfiguration {
     }
 
     @Bean
-    public CompositeHealthContributor certificatesHealthContributor(KeyStore adminTrustStore,
-                                                                    HttpClientProperties gatewayHttpClientProperties,
-                                                                    KeyStore serverKeyStore) {
-        Map<String, HealthIndicator> map = new HashMap<>() {
-            {
-                put("adminTrustStore", certificatesHealthIndicator(adminTrustStore));
-                put("gatewayTrustStore", new CertificatesHealthIndicator(
-                        new CertificateInfoCache(CertificateInfoLoader.loadCertificateInfos(gatewayHttpClientProperties))
-                ));
-            }
-        };
+    public CompositeHealthContributor certificatesHealthContributor(
+        KeyStore adminTrustStore,
+        HttpClientProperties gatewayHttpClientProperties,
+        @Autowired(required = false) KeyStore serverKeyStore) {
+        Map<String, HealthIndicator> map = new HashMap<>();
+
+        map.put("adminTrustStore", certificatesHealthIndicator(adminTrustStore));
+        map.put("gatewayTrustStore", new CertificatesHealthIndicator(
+            new CertificateInfoCache(CertificateInfoLoader.loadCertificateInfos(gatewayHttpClientProperties))
+        ));
         if (serverKeyStore != null) {
             map.put("serverKeyStore", certificatesHealthIndicator(serverKeyStore));
         }

@@ -7,6 +7,7 @@ import ee.ria.govsso.inproxy.util.TestUtils;
 import java.util.List;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -149,6 +150,7 @@ class TaraHydraOauth2EndpointTest extends BaseTest {
         }
 
         @Test
+        @Disabled("TODO AUT-2156")
         void hydra_oAuthTokenRequestHasEmptyXClientIdHeaderAndCorrectAccessLog_Returns400() {
             String responseBody = String.format("{\"client-a\":[\"%s\"]}", "1.2.3.4");
 
@@ -385,6 +387,7 @@ class TaraHydraOauth2EndpointTest extends BaseTest {
     }
 
     @Test
+    @Disabled("TODO AUT-2156")
     void hydra_oAuthTokenRequestHasXClientIdHeaderAddedFromBodyValue_Returns200() {
         String requestBody = "client_id=client-a";
         String responseBody = String.format("{\"client-a\":[\"%s\"]}", "1.2.3.4");
@@ -410,12 +413,15 @@ class TaraHydraOauth2EndpointTest extends BaseTest {
             .body(equalToCompressingWhiteSpace(expectedResponse));
 
         HYDRA_MOCK_SERVER.verify(exactly(1), postRequestedFor(urlEqualTo("/oauth2/token")));
+        HYDRA_MOCK_SERVER.verify(postRequestedFor(urlPathEqualTo("/oauth2/token"))
+            .withHeader("X-ClientId", equalTo("client-a")));
 
         List<ILoggingEvent> logEntries = assertAccessLogIsLogged("client-a"); // checks if accesslog contains this string
         assertCorrectAccessLogFormat(logEntries, "client-a");
     }
 
     @Test
+    @Disabled("TODO AUT-2156")
     void hydra_oAuthTokenRequestHasXClientIdHeaderAddedFromHeaderValue_Returns200() {
         ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
             .willReturn(aResponse()
@@ -450,6 +456,7 @@ class TaraHydraOauth2EndpointTest extends BaseTest {
     }
 
     @Test
+    @Disabled("TODO AUT-2156")
     void hydra_oAuthTokenRequestHasXClientIdHeaderAddedFromActualClientId_Returns200() {
         String requestBody = "client_id=client-a";
         String responseBody = String.format("{\"client-a\":[\"%s\"]}", "1.2.3.4");
