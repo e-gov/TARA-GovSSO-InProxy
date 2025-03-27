@@ -15,7 +15,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
-import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
@@ -33,7 +32,7 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
 
     public static final String AUTHENTICATION_SCHEME_BASIC = "basic";
     public static final String REQUEST_BODY_FORM_ELEMENT_KEY = "client_id";
-    public static final String X_CLIENT_ID_HEADER = "X-ClientId";
+    public static final String CLIENT_ID_ATTR = "clientIdAttr";
 
     private final TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService;
     private final Jackson2JsonEncoder jackson2JsonEncoder;
@@ -58,31 +57,34 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
                 clientId = getClientId(exchange);
                 if (clientId == null) {
                     throw new HydraStyleException(
-                            "invalid_grant", "The provided authorization grant is invalid.", HttpStatus.BAD_REQUEST);
-                } else if (!tokenRequestAllowedIpAddressesService.isTokenRequestAllowed(clientId, requestIpAddress)) {
-                    if (ipBlockEnabled){
-                        throw new HydraStyleException(
-                                "unauthorized_client",
-                                String.format("IP address %s is not whitelisted for client_id \"%s\"", requestIpAddress, clientId),
-                                HttpStatus.BAD_REQUEST);
-                    }
-                    log.warn(String.format("unauthorized_client - IP address %s is not whitelisted for client_id \"%s\", allowing request", requestIpAddress, clientId), exchange);
+                        "invalid_grant",
+                        "The provided authorization grant is invalid.",
+                        HttpStatus.BAD_REQUEST
+                    );
                 }
 
-                // Adding X-ClientId header for Netty accesslog
-                return chain.filter(addXClientIdHeader(clientId, exchange));
+                boolean isAllowed = tokenRequestAllowedIpAddressesService.isTokenRequestAllowed(clientId, requestIpAddress);
+                if (!isAllowed) {
+                    if (ipBlockEnabled) {
+                        throw new HydraStyleException(
+                            "unauthorized_client",
+                            String.format("IP address %s is not whitelisted for client_id \"%s\"", requestIpAddress, clientId),
+                            HttpStatus.BAD_REQUEST
+                        );
+                    } else {
+                        log.warn(
+                            String.format("unauthorized_client - IP address %s is not whitelisted for client_id \"%s\", allowing request", requestIpAddress, clientId),
+                            exchange
+                        );
+                    }
+                }
+
+                exchange.getAttributes().put(CLIENT_ID_ATTR, clientId);
+                return chain.filter(exchange);
             } catch (HydraStyleException e) {
-                return createErrorResponse(addXClientIdHeader(clientId, exchange), e);
+                return createErrorResponse(exchange, e);
             }
         };
-    }
-
-    private ServerWebExchange addXClientIdHeader(String clientId, ServerWebExchange exchange)  {
-        // The header is only used internally within the inproxy to pass information between components; while it’s included in requests to Hydra, Hydra doesn’t need it
-        ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
-            .header(X_CLIENT_ID_HEADER, clientId)
-            .build();
-        return exchange.mutate().request(mutatedRequest).build();
     }
 
     private Mono<Void> createErrorResponse(ServerWebExchange exchange, HydraStyleException e) {

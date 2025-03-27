@@ -95,10 +95,10 @@
         </encoder>
     </appender>
     <appender name="async" class="ch.qos.logback.classic.AsyncAppender">
-        <appender-ref ref="accessLog" />
+        <appender-ref ref="accessLog"/>
     </appender>
 
-    <logger name="reactor.netty.http.server.AccessLog" level="INFO" additivity="false">
+    <logger name="ee.ria.govsso.inproxy.filter.CustomAccessLogFilter" level="INFO" additivity="false">
         <appender-ref ref="async"/>
     </logger>
 

@@ -36,7 +36,7 @@ public class BaseTestLoggingAssertion {
 
     private static ListAppender<ILoggingEvent> mockLogAppender;
     private ListAppender<ILoggingEvent> accessLogAppender;
-    private static final String ACCESS_LOGGER_NAME = "reactor.netty.http.server.AccessLog";
+    private static final String ACCESS_LOGGER_NAME = "ee.ria.govsso.inproxy.filter.CustomAccessLogFilter";
 
 
     @BeforeEach

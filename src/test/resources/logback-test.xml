@@ -19,7 +19,7 @@
         </encoder>
     </appender>
 
-    <logger name="reactor.netty.http.server.AccessLog" level="INFO" additivity="false">
+    <logger name="ee.ria.govsso.inproxy.filter.CustomAccessLogFilter" level="INFO" additivity="false">
         <appender-ref ref="accesslog"/>
     </logger>
     <!-- Decrease the amount of logs from Jetty started by WireMock -->
