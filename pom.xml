@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.3</version>
+        <version>3.4.4</version>
         <relativePath/><!-- Lookup parent from repository. -->
     </parent>
 
@@ -30,11 +30,11 @@
         <spring-boot.build-image.builder>paketobuildpacks/builder:tiny</spring-boot.build-image.builder>
         <spring-boot.build-image.imageName>${project.artifactId}:latest</spring-boot.build-image.imageName><!-- Use "latest" tag instead of version tag. -->
 
-        <elastic-apm.version>1.52.1</elastic-apm.version>
-        <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
-        <logstash-logback-encoder.version>8.0</logstash-logback-encoder.version>
-        <spring-cloud.version>2024.0.0</spring-cloud.version><!-- Spring Cloud 2024.0.x release train is only compatible with Spring Boot 3.4.x, see table 1 at https://spring.io/projects/spring-cloud -->
-        <wiremock.version>3.12.0</wiremock.version>
+        <elastic-apm.version>1.53.0</elastic-apm.version>
+        <jacoco-maven-plugin.version>0.8.13</jacoco-maven-plugin.version>
+        <logstash-logback-encoder.version>8.1</logstash-logback-encoder.version>
+        <spring-cloud.version>2024.0.1</spring-cloud.version><!-- Spring Cloud 2024.0.x release train is only compatible with Spring Boot 3.4.x, see table 1 at https://spring.io/projects/spring-cloud -->
+        <wiremock.version>3.12.1</wiremock.version>
         <ipaddress.version>5.5.1</ipaddress.version>
         <nimbus-oauth2-oidc-sdk.version>11.23.1</nimbus-oauth2-oidc-sdk.version>
     </properties>
