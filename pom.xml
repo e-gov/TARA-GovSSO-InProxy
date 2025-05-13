@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.4</version>
+        <version>3.4.5</version>
         <relativePath/><!-- Lookup parent from repository. -->
     </parent>
 
@@ -34,9 +34,9 @@
         <jacoco-maven-plugin.version>0.8.13</jacoco-maven-plugin.version>
         <logstash-logback-encoder.version>8.1</logstash-logback-encoder.version>
         <spring-cloud.version>2024.0.1</spring-cloud.version><!-- Spring Cloud 2024.0.x release train is only compatible with Spring Boot 3.4.x, see table 1 at https://spring.io/projects/spring-cloud -->
-        <wiremock.version>3.12.1</wiremock.version>
+        <wiremock.version>3.13.0</wiremock.version>
         <ipaddress.version>5.5.1</ipaddress.version>
-        <nimbus-oauth2-oidc-sdk.version>11.23.1</nimbus-oauth2-oidc-sdk.version>
+        <nimbus-oauth2-oidc-sdk.version>11.24</nimbus-oauth2-oidc-sdk.version>
     </properties>
 
     <dependencyManagement>
