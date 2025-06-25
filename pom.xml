@@ -29,6 +29,7 @@
         <maven.compiler.release>17</maven.compiler.release>
         <imageName>${project.artifactId}:latest</imageName>
         <githubMirror>https://github.com</githubMirror>
+        <project.build.outputTimestamp>1980-01-01T00:00:02Z</project.build.outputTimestamp><!-- Make build reproducible by specifying a non-dynamic build date -->
 
         <elastic-apm.version>1.54.0</elastic-apm.version>
         <jacoco-maven-plugin.version>0.8.13</jacoco-maven-plugin.version>
@@ -212,6 +213,7 @@
                             <BP_SPRING_CLOUD_BINDINGS_DISABLED>true</BP_SPRING_CLOUD_BINDINGS_DISABLED>
                             <!-- Enable overriding GitHub mirror -->
                             <BP_DEPENDENCY_MIRROR_GITHUB_COM>${githubMirror}</BP_DEPENDENCY_MIRROR_GITHUB_COM>
+                            <!-- Some mirrors might respond too slowly to handle the default timeout (5s) -->
                             <BP_RESPONSE_HEADER_TIMEOUT>60</BP_RESPONSE_HEADER_TIMEOUT>
                         </env>
                     </image>
