@@ -3,6 +3,8 @@ package ee.ria.govsso.inproxy;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import ee.ria.govsso.inproxy.configuration.TestLoadBalancingConfiguration;
+import ee.ria.govsso.inproxy.configuration.TestSchedulingConfiguration;
 import io.restassured.RestAssured;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import lombok.extern.slf4j.Slf4j;
@@ -15,17 +17,18 @@ import org.springframework.util.unit.DataSize;
 
 import java.io.File;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static io.restassured.config.RedirectConfig.redirectConfig;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @Slf4j
 @SpringBootTest(
         webEnvironment = RANDOM_PORT,
-        classes = { Application.class, MockPropertyBeanConfiguration.class})
+        classes = {
+                Application.class,
+                MockPropertyBeanConfiguration.class,
+                TestLoadBalancingConfiguration.class,
+                TestSchedulingConfiguration.class
+        })
 public abstract class BaseTest extends BaseTestLoggingAssertion {
 
     protected static final WireMockServer HYDRA_MOCK_SERVER = new WireMockServer(WireMockConfiguration.wireMockConfig()
@@ -68,7 +71,6 @@ public abstract class BaseTest extends BaseTestLoggingAssertion {
     @BeforeAll
     static void setUpAll() {
         configureRestAssured();
-        createStubsForScheduledTasks();
         HYDRA_MOCK_SERVER.start();
         SESSION_MOCK_SERVER.start();
         TARA_MOCK_SERVER.start();
@@ -87,22 +89,6 @@ public abstract class BaseTest extends BaseTestLoggingAssertion {
         SESSION_MOCK_SERVER.resetAll();
         TARA_MOCK_SERVER.resetAll();
         ADMIN_MOCK_SERVER.resetAll();
-        createStubsForScheduledTasks();
-    }
-
-    private static void createStubsForScheduledTasks() {
-        SESSION_MOCK_SERVER.stubFor(get(urlEqualTo("/actuator/health/readiness"))
-                .willReturn(aResponse()
-                        .withStatus(200)));
-        HYDRA_MOCK_SERVER.stubFor(get(urlEqualTo("/health/ready"))
-                .willReturn(aResponse()
-                        .withStatus(200)));
-        ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
-                .willReturn(aResponse()
-                        .withStatus(200)));
-        TARA_MOCK_SERVER.stubFor(get(urlPathEqualTo("/actuator/health/readiness"))
-                .willReturn(aResponse()
-                        .withStatus(200)));
     }
 
     @AfterAll

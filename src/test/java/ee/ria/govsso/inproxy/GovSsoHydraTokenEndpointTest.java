@@ -102,16 +102,21 @@ public class GovSsoHydraTokenEndpointTest extends BaseTest {
     @TestPropertySource(properties = "tara-govsso-inproxy.token-request-block-ip-addresses=false")
     class IpBlockNotEnabledTests extends BaseTest {
 
+        // A new `TokenRequestAllowedIpAddressesService` is created for the nested test class, different from
+        // `GovSsoHydraTokenEndpointTest.tokenRequestAllowedIpAddressesService`.
+        @Autowired
+        private TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService;
+
         @BeforeEach
         void setupServerMocks() {
             GovSsoHydraTokenEndpointTest.this.setupServerMocks();
         }
 
         @ParameterizedTest
-        @ValueSource(strings = {"1.2.3.5-100\", \"111.11.11.11", "1.2.3.2"})
+        @ValueSource(strings = {"[\"1.2.3.5-100\", \"111.11.11.11\"]", "[\"1.2.3.2\"]"})
         void hydra_oAuthTokenRequestIpNotInAllowedIps_Returns200_AndLogError(String whitelistedIps) {
 
-            String responseBody = String.format("{\"client-a\":[\"%s\"]}", whitelistedIps);
+            String responseBody = String.format("{\"client-a\": %s}", whitelistedIps);
 
             ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))
                     .willReturn(aResponse()

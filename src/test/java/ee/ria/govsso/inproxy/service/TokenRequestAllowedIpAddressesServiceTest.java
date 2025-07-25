@@ -66,8 +66,7 @@ class TokenRequestAllowedIpAddressesServiceTest extends BaseTest {
         assertThat(isTokenRequestAllowed, is(true));
         assertThat(tokenRequestAllowedIpAddressesFromFile.get("client-from-file").get(0), equalTo("1.1.1.1"));
         assertMessageWithMarkerIsLoggedOnce(TokenRequestAllowedIpAddressesService.class, INFO, "ADMIN request", "http.request.method=GET, url.full=https://admin.localhost:17442//clients/tokenrequestallowedipaddresses");
-        //TODO Logged twice if scheduled task runs during the execution of this test.
-        //assertMessageWithMarkerIsLoggedOnce(TokenRequestAllowedIpAddressesService.class, INFO, "ADMIN response: 404", "http.response.status_code=404, http.response.body.content=\"\"");
+        assertMessageWithMarkerIsLoggedOnce(TokenRequestAllowedIpAddressesService.class, INFO, "ADMIN response: 404", "http.response.status_code=404, http.response.body.content=\"\"");
     }
 
     @Test
