@@ -63,12 +63,6 @@ spring:
             - RedirectTo=302, https://www.ria.ee/riigi-infosusteem/elektrooniline-identiteet-ja-usaldusteenused/kesksed-autentimisteenused#tara
           predicates:
             - Path=/
-        - id: heartbeat
-          uri: lb://login
-          predicates:
-            - Path=/heartbeat**,/heartbeat/**
-          filters:
-            - RewritePath=/heartbeat.*, /notfound
         - id: default
           order: 9999 # Very low priority compared to the other routes (order value is 0 by default)
           uri: lb://login
