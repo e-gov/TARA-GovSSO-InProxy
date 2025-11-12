@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.11</version>
+        <version>3.5.7</version>
         <relativePath/><!-- Lookup parent from repository. -->
     </parent>
 
@@ -34,10 +34,10 @@
         <elastic-apm.version>1.55.1</elastic-apm.version>
         <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
         <logstash-logback-encoder.version>8.1</logstash-logback-encoder.version><!-- TODO Upgrade to logstash-logback-encoder 9.x with Spring Boot 4.x, both upgrade to Jackson 3 -->
-        <spring-cloud.version>2024.0.2</spring-cloud.version><!-- Spring Cloud 2024.0.x release train is only compatible with Spring Boot 3.4.x, see table 1 at https://spring.io/projects/spring-cloud -->
+        <spring-cloud.version>2025.0.0</spring-cloud.version><!-- Spring Cloud 2025.0.x release train is only compatible with Spring Boot 3.5.x, see table 1 at https://spring.io/projects/spring-cloud -->
         <wiremock.version>3.13.1</wiremock.version>
         <ipaddress.version>5.5.1</ipaddress.version>
-        <nimbus-oauth2-oidc-sdk.version>11.30</nimbus-oauth2-oidc-sdk.version>
+        <nimbus-oauth2-oidc-sdk.version>11.30.1</nimbus-oauth2-oidc-sdk.version>
     </properties>
 
     <dependencyManagement>
@@ -114,15 +114,7 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-gateway</artifactId>
-            <exclusions>
-                <!-- https://docs.spring.io/spring-cloud-commons/docs/4.0.x/reference/html/#encryption-and-decryption
-                     pulls in older Bouncy Castle. This feature is not used in current application. -->
-                <exclusion>
-                    <groupId>org.springframework.security</groupId>
-                    <artifactId>spring-security-rsa</artifactId>
-                </exclusion>
-            </exclusions>
+            <artifactId>spring-cloud-starter-gateway-server-webflux</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>

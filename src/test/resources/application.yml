@@ -49,14 +49,16 @@ spring:
       health-check:
         interval: 5s
     gateway:
-      default-filters:
-        - RemoveRequestHeader=traceparent
-        - RemoveRequestHeader=tracestate
-        - RemoveRequestHeader=elastic-apm-traceparent
-      forwarded:
-        enabled: false
-      x-forwarded:
-        enabled: false
+      server:
+        webflux:
+          default-filters:
+            - RemoveRequestHeader=traceparent
+            - RemoveRequestHeader=tracestate
+            - RemoveRequestHeader=elastic-apm-traceparent
+          forwarded:
+            enabled: false
+          x-forwarded:
+            enabled: false
 
 tara-govsso-inproxy:
   admin:

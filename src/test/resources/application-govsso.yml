@@ -24,57 +24,59 @@ spring:
           - hydra
           - session
     gateway:
-      httpclient:
-        ssl:
-          trustedX509Certificates:
-            - classpath:govsso-ca.localhost.crt
-      routes:
-        - id: hydra-well-known
-          uri: lb://hydra
-          predicates:
-            - Path=/.well-known/openid-configuration,/.well-known/jwks.json
-          filters:
-            - WellKnownResponseCache=30m,10MB
-        - id: oauth2-auth
-          uri: lb://hydra
-          predicates:
-            - Path=/oauth2/auth
-          filters:
-            - TraceParent
-            - Prompt
-        - id: oauth2-sessions-logout
-          uri: lb://hydra
-          predicates:
-            - Path=/oauth2/sessions/logout
-          filters:
-            - TraceParent
-            - GovSsoLogoutValidator
-        - id: oauth2-token
-          uri: lb://hydra
-          predicates:
-            - Path=/oauth2/token
-          filters:
-            - name: CacheRequestBody
-              args:
-                bodyClass: java.lang.String
-            - IpAddress
-        - id: admin
-          uri: lb://session
-          predicates:
-            - Path=/admin**,/admin/**
-          filters:
-            - RewritePath=/admin.*, /notfound
-        - id: root
-          uri: https://example.com # Not used, but valid URI is required by Spring
-          filters:
-            - RedirectTo=302, https://www.ria.ee/riigi-infosusteem/elektrooniline-identiteet-ja-usaldusteenused/kesksed-autentimisteenused#govsso
-          predicates:
-            - Path=/
-        - id: default
-          order: 9999 # Very low priority compared to the other routes (order value is 0 by default)
-          uri: lb://session
-          predicates:
-            - Path=/**
+      server:
+        webflux:
+          httpclient:
+            ssl:
+              trustedX509Certificates:
+                - classpath:govsso-ca.localhost.crt
+          routes:
+            - id: hydra-well-known
+              uri: lb://hydra
+              predicates:
+                - Path=/.well-known/openid-configuration,/.well-known/jwks.json
+              filters:
+                - WellKnownResponseCache=30m,10MB
+            - id: oauth2-auth
+              uri: lb://hydra
+              predicates:
+                - Path=/oauth2/auth
+              filters:
+                - TraceParent
+                - Prompt
+            - id: oauth2-sessions-logout
+              uri: lb://hydra
+              predicates:
+                - Path=/oauth2/sessions/logout
+              filters:
+                - TraceParent
+                - GovSsoLogoutValidator
+            - id: oauth2-token
+              uri: lb://hydra
+              predicates:
+                - Path=/oauth2/token
+              filters:
+                - name: CacheRequestBody
+                  args:
+                    bodyClass: java.lang.String
+                - IpAddress
+            - id: admin
+              uri: lb://session
+              predicates:
+                - Path=/admin**,/admin/**
+              filters:
+                - RewritePath=/admin.*, /notfound
+            - id: root
+              uri: https://example.com # Not used, but valid URI is required by Spring
+              filters:
+                - RedirectTo=302, https://www.ria.ee/riigi-infosusteem/elektrooniline-identiteet-ja-usaldusteenused/kesksed-autentimisteenused#govsso
+              predicates:
+                - Path=/
+            - id: default
+              order: 9999 # Very low priority compared to the other routes (order value is 0 by default)
+              uri: lb://session
+              predicates:
+                - Path=/**
 
 tara-govsso-inproxy:
   govsso:
