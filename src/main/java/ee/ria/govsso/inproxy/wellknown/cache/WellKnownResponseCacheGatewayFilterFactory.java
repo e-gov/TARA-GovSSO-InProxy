@@ -16,13 +16,15 @@
 
 package ee.ria.govsso.inproxy.wellknown.cache;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.springframework.cache.Cache;
-import org.springframework.cloud.gateway.config.LocalResponseCacheAutoConfiguration;
+import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.cloud.gateway.filter.factory.cache.LocalResponseCacheProperties;
+import org.springframework.cloud.gateway.filter.factory.cache.LocalResponseCacheUtils;
 import org.springframework.cloud.gateway.filter.factory.cache.keygenerator.CacheKeyGenerator;
 import org.springframework.cloud.gateway.support.HasRouteId;
 import org.springframework.stereotype.Component;
@@ -38,6 +40,7 @@ public class WellKnownResponseCacheGatewayFilterFactory
 		extends AbstractGatewayFilterFactory<WellKnownResponseCacheGatewayFilterFactory.RouteCacheConfiguration> {
 
 	private final CacheKeyGenerator cacheKeyGenerator;
+	private final CaffeineCacheManager caffeineCacheManager = new CaffeineCacheManager();
 
 	public WellKnownResponseCacheGatewayFilterFactory(CacheKeyGenerator cacheKeyGenerator) {
 		super(WellKnownResponseCacheGatewayFilterFactory.RouteCacheConfiguration.class);
@@ -45,11 +48,14 @@ public class WellKnownResponseCacheGatewayFilterFactory
 	}
 
 	@Override
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public GatewayFilter apply(RouteCacheConfiguration config) {
 		LocalResponseCacheProperties cacheProperties = mapRouteCacheConfig(config);
 
-		Cache cache = LocalResponseCacheAutoConfiguration.createGatewayCacheManager(cacheProperties)
-				.getCache(config.getRouteId() + "-well-known-cache");
+		Caffeine caffeine = LocalResponseCacheUtils.createCaffeine(cacheProperties);
+		String cacheName = config.getRouteId() + "-well-known-cache";
+		caffeineCacheManager.registerCustomCache(cacheName, caffeine.build());
+		Cache cache = caffeineCacheManager.getCache(cacheName);
 		return new WellKnownResponseCacheGatewayFilter(new WellKnownResponseCacheManager(cacheKeyGenerator, cache));
 	}
 

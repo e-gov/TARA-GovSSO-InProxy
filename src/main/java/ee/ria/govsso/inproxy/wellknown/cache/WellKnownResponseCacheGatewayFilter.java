@@ -136,7 +136,7 @@ public class WellKnownResponseCacheGatewayFilter implements GatewayFilter, Order
                 log.debug("Not storing response in cache, status code {}", statusCode);
                 return super.writeWith(body);
             }
-            if (getHeaders().containsKey(HttpHeaders.VARY)) {
+            if (getHeaders().containsHeader(HttpHeaders.VARY)) {
                 log.error("Unexpected {} header in response, not storing response in cache", HttpHeaders.VARY);
                 return super.writeWith(body);
             }

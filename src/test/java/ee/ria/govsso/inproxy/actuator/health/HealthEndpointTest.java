@@ -3,7 +3,6 @@ package ee.ria.govsso.inproxy.actuator.health;
 import ee.ria.govsso.inproxy.BaseTest;
 import ee.ria.govsso.inproxy.service.TokenRequestAllowedIpAddressesService;
 import io.restassured.response.ValidatableResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Set;
@@ -16,10 +15,13 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
 @ActiveProfiles({"govsso"})
-@RequiredArgsConstructor
 abstract class HealthEndpointTest extends BaseTest {
 
     private final TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService;
+
+    protected HealthEndpointTest(TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService) {
+        this.tokenRequestAllowedIpAddressesService = tokenRequestAllowedIpAddressesService;
+    }
 
     void mockAdminHealthIndicatorUp() {
         ADMIN_MOCK_SERVER.stubFor(get(urlPathEqualTo("/clients/tokenrequestallowedipaddresses"))

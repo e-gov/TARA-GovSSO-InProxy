@@ -34,6 +34,9 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public class BaseTestLoggingAssertion {
 
+    private static final String NETTY_MACOS_DNS_WARNING =
+            "Unable to load io.netty.resolver.dns.macos.MacOSDnsServerAddressStreamProvider";
+
     private static ListAppender<ILoggingEvent> mockLogAppender;
     private ListAppender<ILoggingEvent> accessLogAppender;
     private static final String ACCESS_LOGGER_NAME = "ee.ria.govsso.inproxy.filter.CustomAccessLogFilter";
@@ -56,6 +59,7 @@ public class BaseTestLoggingAssertion {
     public void afterEachTest() {
         List<ILoggingEvent> unmatchedErrorsAndWarnings = mockLogAppender.list.stream()
                 .filter(e -> e.getLevel() == ERROR || e.getLevel() == WARN)
+                .filter(e -> !e.getFormattedMessage().startsWith(NETTY_MACOS_DNS_WARNING))
                 .collect(Collectors.toList());
 
         ((Logger) getLogger(ROOT_LOGGER_NAME)).detachAppender(mockLogAppender);

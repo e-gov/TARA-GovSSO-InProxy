@@ -1,11 +1,11 @@
 package ee.ria.govsso.inproxy;
 
 import com.nimbusds.jose.JWSObject;
+import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import ee.ria.govsso.inproxy.util.TestUtils;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -13,6 +13,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.text.ParseException;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -224,15 +225,18 @@ public class GovSsoHydraLogoutEndpointTest extends BaseTest {
                 .withoutHeader(TRACE_PARENT_PARAMETER_NAME));
     }
 
-    @SneakyThrows
     private static String createTestJwt(String baseJwtString, Consumer<JWTClaimsSet.Builder> func) {
-        SignedJWT originalJwt = SignedJWT.parse(baseJwtString);
-        JWTClaimsSet.Builder claimsBuilder = new JWTClaimsSet.Builder(originalJwt.getJWTClaimsSet());
-        func.accept(claimsBuilder);
-        JWTClaimsSet claims = claimsBuilder.build();
-        JWSObject jwt = new JWSObject(originalJwt.getHeader(), claims.toPayload());
-        jwt.sign(new RSASSASigner(generateTestRsaKeyPair()));
-        return jwt.serialize();
+        try {
+            SignedJWT originalJwt = SignedJWT.parse(baseJwtString);
+            JWTClaimsSet.Builder claimsBuilder = new JWTClaimsSet.Builder(originalJwt.getJWTClaimsSet());
+            func.accept(claimsBuilder);
+            JWTClaimsSet claims = claimsBuilder.build();
+            JWSObject jwt = new JWSObject(originalJwt.getHeader(), claims.toPayload());
+            jwt.sign(new RSASSASigner(generateTestRsaKeyPair()));
+            return jwt.serialize();
+        } catch (ParseException | JOSEException e) {
+            throw new IllegalStateException("Failed to create test JWT", e);
+        }
     }
 
 }
