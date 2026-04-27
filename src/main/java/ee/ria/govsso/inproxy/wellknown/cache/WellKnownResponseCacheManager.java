@@ -50,7 +50,8 @@ public class WellKnownResponseCacheManager {
 				.headers(response.getHeaders());
 
 		return body.map(dataBuffer -> {
-			ByteBuffer byteBuffer = dataBuffer.toByteBuffer().asReadOnlyBuffer();
+			ByteBuffer byteBuffer = dataBuffer.toByteBuffer(dataBuffer.readPosition(), dataBuffer.readableByteCount())
+					.asReadOnlyBuffer();
 			cachedResponseBuilder.appendToBody(byteBuffer);
 			return dataBuffer;
 		}).doOnComplete(() -> {

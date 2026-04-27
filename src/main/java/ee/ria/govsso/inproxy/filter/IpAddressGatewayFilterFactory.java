@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @Component
@@ -118,7 +119,7 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
             return clientIdFromHeader;
         }
 
-        if (StringUtils.equals(clientIdFromHeader, clientIdFromBody)) {
+        if (Objects.equals(clientIdFromHeader, clientIdFromBody)) {
             return clientIdFromHeader;
         }
 
