@@ -1,6 +1,5 @@
 package ee.ria.govsso.inproxy.filter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import ee.ria.govsso.inproxy.exception.HydraStyleException;
 import ee.ria.govsso.inproxy.service.TokenRequestAllowedIpAddressesService;
 import lombok.extern.slf4j.Slf4j;
@@ -14,11 +13,12 @@ import org.springframework.core.codec.Hints;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.codec.json.Jackson2JsonEncoder;
+import org.springframework.http.codec.json.JacksonJsonEncoder;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -35,17 +35,17 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
     public static final String CLIENT_ID_ATTR = "clientIdAttr";
 
     private final TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService;
-    private final Jackson2JsonEncoder jackson2JsonEncoder;
+    private final JacksonJsonEncoder jacksonJsonEncoder;
 
     @Value("${tara-govsso-inproxy.token-request-block-ip-addresses}")
     private boolean ipBlockEnabled;
 
 
     public IpAddressGatewayFilterFactory(TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService,
-                                         ObjectMapper objectMapper) {
+                                         JsonMapper objectMapper) {
         super(Config.class);
         this.tokenRequestAllowedIpAddressesService = tokenRequestAllowedIpAddressesService;
-        jackson2JsonEncoder = new Jackson2JsonEncoder(objectMapper);
+        jacksonJsonEncoder = new JacksonJsonEncoder(objectMapper);
     }
 
     @Override
@@ -100,7 +100,7 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
                 "error", e.getError(),
                 "error_description", e.getErrorDescription());
 
-        return response.writeWith(jackson2JsonEncoder.encode(Mono.just(responseBody),
+        return response.writeWith(jacksonJsonEncoder.encode(Mono.just(responseBody),
                 response.bufferFactory(),
                 ResolvableType.forInstance(responseBody),
                 MediaType.APPLICATION_JSON,

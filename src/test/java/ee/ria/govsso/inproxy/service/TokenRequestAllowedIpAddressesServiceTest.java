@@ -1,11 +1,11 @@
 package ee.ria.govsso.inproxy.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import ee.ria.govsso.inproxy.BaseTest;
 import ee.ria.govsso.inproxy.configuration.properties.AdminConfigurationProperties;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.File;
 import java.io.IOException;

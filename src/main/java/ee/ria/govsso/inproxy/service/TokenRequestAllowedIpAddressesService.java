@@ -1,7 +1,5 @@
 package ee.ria.govsso.inproxy.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import ee.ria.govsso.inproxy.configuration.properties.AdminConfigurationProperties;
 import ee.ria.govsso.inproxy.logging.ClientRequestLogger;
 import ee.ria.govsso.inproxy.util.ExceptionUtil;
@@ -15,6 +13,8 @@ import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.File;
 import java.util.List;
