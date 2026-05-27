@@ -3,21 +3,32 @@ package ee.ria.govsso.inproxy;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import ee.ria.govsso.inproxy.configuration.TestLoadBalancingConfiguration;
+import ee.ria.govsso.inproxy.configuration.TestSchedulingConfiguration;
 import io.restassured.RestAssured;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.util.unit.DataSize;
 
 import java.io.File;
 
 import static io.restassured.config.RedirectConfig.redirectConfig;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @Slf4j
-@InProxySpringBootTest
+@SpringBootTest(
+        webEnvironment = RANDOM_PORT,
+        classes = {
+                Application.class,
+                MockPropertyBeanConfiguration.class,
+                TestLoadBalancingConfiguration.class,
+                TestSchedulingConfiguration.class
+        })
 public abstract class BaseTest extends BaseTestLoggingAssertion {
 
     protected static final WireMockServer HYDRA_MOCK_SERVER = new WireMockServer(WireMockConfiguration.wireMockConfig()

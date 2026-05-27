@@ -1,6 +1,7 @@
 package ee.ria.govsso.inproxy.actuator.health.certificates;
 
 import ee.ria.govsso.inproxy.BaseTest;
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.config.HttpClientProperties;
@@ -12,17 +13,12 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 @ActiveProfiles({"govsso"})
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
 class CertificateInfoLoaderTest extends BaseTest {
 
     private final KeyStore adminTrustStore;
     private final HttpClientProperties httpClientProperties;
     // TODO Verifying serverKeyStore would require setting up TLS between REST Assured client and Spring Boot server.
-
-    CertificateInfoLoaderTest(@Autowired KeyStore adminTrustStore,
-                              @Autowired HttpClientProperties httpClientProperties) {
-        this.adminTrustStore = adminTrustStore;
-        this.httpClientProperties = httpClientProperties;
-    }
 
     @Test
     void loadCertificateInfos_adminTrustStore() {
