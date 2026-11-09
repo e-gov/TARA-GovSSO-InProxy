@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
+import org.springframework.cloud.gateway.support.ipresolver.RemoteAddressResolver;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.codec.Hints;
 import org.springframework.http.HttpHeaders;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -34,6 +36,7 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
     public static final String REQUEST_BODY_FORM_ELEMENT_KEY = "client_id";
     public static final String CLIENT_ID_ATTR = "clientIdAttr";
 
+    private final RemoteAddressResolver remoteAddressResolver;
     private final TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService;
     private final Jackson2JsonEncoder jackson2JsonEncoder;
 
@@ -41,9 +44,11 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
     private boolean ipBlockEnabled;
 
 
-    public IpAddressGatewayFilterFactory(TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService,
+    public IpAddressGatewayFilterFactory(RemoteAddressResolver remoteAddressResolver,
+                                         TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService,
                                          ObjectMapper objectMapper) {
         super(Config.class);
+        this.remoteAddressResolver = remoteAddressResolver;
         this.tokenRequestAllowedIpAddressesService = tokenRequestAllowedIpAddressesService;
         jackson2JsonEncoder = new Jackson2JsonEncoder(objectMapper);
     }
@@ -53,7 +58,15 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
         return (exchange, chain) -> {
             String clientId = null;
             try {
-                String requestIpAddress = exchange.getRequest().getRemoteAddress().getAddress().getHostAddress();
+                InetSocketAddress remoteAddress = remoteAddressResolver.resolve(exchange);
+                if(remoteAddress == null) {
+                    throw new HydraStyleException(
+                            "unauthorized_client",
+                            "Unable to parse request IP",
+                            HttpStatus.BAD_REQUEST
+                    );
+                }
+                String requestIpAddress = remoteAddress.getAddress().getHostAddress();
                 clientId = getClientId(exchange);
                 if (clientId == null) {
                     throw new HydraStyleException(

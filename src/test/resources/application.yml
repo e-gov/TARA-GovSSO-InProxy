@@ -30,7 +30,6 @@ server:
   error:
     whitelabel:
       enabled: false
-  forward-headers-strategy: NATIVE
 
 spring:
   main:
@@ -55,10 +54,6 @@ spring:
             - RemoveRequestHeader=traceparent
             - RemoveRequestHeader=tracestate
             - RemoveRequestHeader=elastic-apm-traceparent
-          forwarded:
-            enabled: false
-          x-forwarded:
-            enabled: false
 
 tara-govsso-inproxy:
   admin:
@@ -69,3 +64,7 @@ tara-govsso-inproxy:
       trust-store-password: changeit
   token-request-block-ip-addresses: true
   enable-access-log: true
+  forwarded-for:
+    trust-upstream-headers:
+      strategy: always
+    append-proximal-client-ip: false

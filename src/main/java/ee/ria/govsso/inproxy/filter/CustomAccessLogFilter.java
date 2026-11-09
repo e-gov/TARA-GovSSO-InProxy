@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
+import org.springframework.cloud.gateway.support.ipresolver.RemoteAddressResolver;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatusCode;
@@ -32,6 +33,8 @@ public class CustomAccessLogFilter implements WebFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(CustomAccessLogFilter.class);
 
+    private final RemoteAddressResolver remoteAddressResolver;
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         long startTimeMillis = System.currentTimeMillis();
@@ -49,7 +52,10 @@ public class CustomAccessLogFilter implements WebFilter {
 
                     String clientId = mutatedExchange.getAttribute(CLIENT_ID_ATTR);
 
-                    String remoteAddr = getRemoteAddr(exchange);
+                    String remoteAddr = Optional.ofNullable(remoteAddressResolver.resolve(exchange))
+                            .map(InetSocketAddress::getAddress)
+                            .map(InetAddress::getHostAddress)
+                            .orElse(null);
                     String method = mutatedExchange.getRequest().getMethod().name();
                     String uri = mutatedExchange.getRequest().getPath().toString();
 
@@ -78,10 +84,4 @@ public class CustomAccessLogFilter implements WebFilter {
                 });
     }
 
-    private String getRemoteAddr(ServerWebExchange exchange) {
-        return Optional.ofNullable(exchange.getRequest().getRemoteAddress())
-                .map(InetSocketAddress::getAddress)
-                .map(InetAddress::getHostAddress)
-                .orElse(null);
-    }
 }
