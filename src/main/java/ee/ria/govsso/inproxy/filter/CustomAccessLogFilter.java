@@ -1,9 +1,11 @@
 package ee.ria.govsso.inproxy.filter;
 
 import ee.ria.govsso.inproxy.logging.CountingServerHttpResponseDecorator;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
+import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.server.reactive.AbstractServerHttpRequest;
@@ -17,22 +19,18 @@ import reactor.netty.http.server.HttpServerRequest;
 import java.time.ZonedDateTime;
 
 import static ee.ria.govsso.inproxy.filter.IpAddressGatewayFilterFactory.CLIENT_ID_ATTR;
+import static java.util.Objects.requireNonNullElse;
 
 @Component
-@Order
+@ConditionalOnBooleanProperty("tara-govsso-inproxy.enable-access-log")
+@Order(Ordered.LOWEST_PRECEDENCE)
+@RequiredArgsConstructor
 public class CustomAccessLogFilter implements WebFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(CustomAccessLogFilter.class);
 
-    @Value("${tara-govsso-inproxy.enable-access-log}")
-    private boolean enableAccessLog;
-
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        if (!enableAccessLog) {
-            return chain.filter(exchange);
-        }
-
         long startTimeMillis = System.currentTimeMillis();
         ZonedDateTime requestTime = ZonedDateTime.now();
 
@@ -47,37 +45,39 @@ public class CustomAccessLogFilter implements WebFilter {
                     long duration = System.currentTimeMillis() - startTimeMillis;
 
                     String clientId = mutatedExchange.getAttribute(CLIENT_ID_ATTR);
-                    clientId = (clientId == null) ? "-" : clientId;
 
-                    String remoteAddr = (mutatedExchange.getRequest().getRemoteAddress() != null)
-                            ? mutatedExchange.getRequest().getRemoteAddress().toString() : "-";
+                    String remoteAddr = getRemoteAddr(exchange);
                     String method = mutatedExchange.getRequest().getMethod().name();
                     String uri = mutatedExchange.getRequest().getPath().toString();
 
                     String protocol = "unknown";
                     if (mutatedExchange.getRequest() instanceof AbstractServerHttpRequest abstractserverhttprequest) {
-                        HttpServerRequest nativeRequest = (abstractserverhttprequest).getNativeRequest();
+                        HttpServerRequest nativeRequest = abstractserverhttprequest.getNativeRequest();
                         protocol = nativeRequest.version().text();
                     }
 
                     HttpStatusCode statusCode = mutatedExchange.getResponse().getStatusCode();
-                    String status = (statusCode != null) ? String.valueOf(statusCode.value()) : "-";
 
                     long realContentLength = decoratedResponse.getByteCount();
-                    String contentLengthStr = (realContentLength > 0) ? String.valueOf(realContentLength) : "-";
 
                     String logMessage = String.format("%s - %s [%s] \"%s %s %s\" %s %s %d",
-                            remoteAddr,
-                            clientId,
+                            requireNonNullElse(remoteAddr, "-"),
+                            requireNonNullElse(clientId, "-"),
                             requestTime,
                             method,
                             uri,
                             protocol,
-                            status,
-                            contentLengthStr,
+                            (statusCode != null) ? String.valueOf(statusCode.value()) : "-",
+                            (realContentLength > 0) ? String.valueOf(realContentLength) : "-",
                             duration);
 
                     logger.info(logMessage);
                 });
+    }
+
+    private String getRemoteAddr(ServerWebExchange exchange) {
+        return exchange.getRequest().getRemoteAddress() != null ?
+                exchange.getRequest().getRemoteAddress().toString() :
+                null;
     }
 }

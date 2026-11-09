@@ -4,7 +4,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
-import java.util.regex.Pattern;
+import org.assertj.core.api.Assertions;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.AfterEach;
@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -24,7 +25,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInRelativeOrder;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -185,15 +185,15 @@ public class BaseTestLoggingAssertion {
             String contentLength = matcher.group(8);
             String duration = matcher.group(9);
 
-            assertTrue(ipAddress.matches("/.+?:\\d+"), "IP format is incorrect: " + ipAddress);
-            assertEquals(expectedClientId, clientId, "Client name does not match: " + clientId);
-            assertTrue(timestamp.matches(".+"), "Timestamp format is incorrect: " + timestamp);
-            assertTrue(httpMethod.matches("[A-Z]+"), "HTTP method format is incorrect: " + httpMethod);
-            assertTrue(uri.matches("/.+"), "URI format is incorrect: " + uri);
-            assertTrue(protocol.matches("HTTP/\\d\\.\\d"), "Protocol format is incorrect: " + protocol);
-            assertTrue(statusCode.matches("\\d{3}"), "Status code format is incorrect: " + statusCode);
-            assertTrue(contentLength.matches("\\d+|-"), "Content length format is incorrect: " + contentLength);
-            assertTrue(duration.matches("\\d+"), "Duration format is incorrect: " + duration);
+            Assertions.assertThat(ipAddress).describedAs("Client IP address").matches("/.+?:\\d+");
+            Assertions.assertThat(clientId).describedAs("Client name").isEqualTo(expectedClientId);
+            Assertions.assertThat(timestamp).describedAs("Timestamp").matches(".+");
+            Assertions.assertThat(httpMethod).describedAs("HTTP method").matches("[A-Z]+");
+            Assertions.assertThat(uri).describedAs("URI").matches("/.+");
+            Assertions.assertThat(protocol).describedAs("Protocol").matches("HTTP/\\d\\.\\d");
+            Assertions.assertThat(statusCode).describedAs("Status code").matches("\\d{3}");
+            Assertions.assertThat(contentLength).describedAs("Content length").matches("\\d+|-");
+            Assertions.assertThat(duration).describedAs("Request duration").matches("\\d+");
         }
     }
 }
