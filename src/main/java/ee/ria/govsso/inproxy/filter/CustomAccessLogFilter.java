@@ -16,7 +16,10 @@ import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.server.HttpServerRequest;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 import static ee.ria.govsso.inproxy.filter.IpAddressGatewayFilterFactory.CLIENT_ID_ATTR;
 import static java.util.Objects.requireNonNullElse;
@@ -76,8 +79,9 @@ public class CustomAccessLogFilter implements WebFilter {
     }
 
     private String getRemoteAddr(ServerWebExchange exchange) {
-        return exchange.getRequest().getRemoteAddress() != null ?
-                exchange.getRequest().getRemoteAddress().toString() :
-                null;
+        return Optional.ofNullable(exchange.getRequest().getRemoteAddress())
+                .map(InetSocketAddress::getAddress)
+                .map(InetAddress::getHostAddress)
+                .orElse(null);
     }
 }

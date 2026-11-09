@@ -167,7 +167,7 @@ public class BaseTestLoggingAssertion {
         for (ILoggingEvent logEntry : logEntries) {
             String formattedMessage = logEntry.getFormattedMessage();
             // Sample expected format:
-            // /127.0.0.1:54933 - client-a [2025-02-13T14:41:33.642177+02:00[Europe/Tallinn]] "POST /oidc/token HTTP/1.1" 200 711 102
+            // 127.0.0.1 - client-a [2025-02-13T14:41:33.642177+02:00[Europe/Tallinn]] "POST /oidc/token HTTP/1.1" 200 711 102
 
             String logPattern = "^(.+?) - (.+?) \\[(.+?)] \"(.+?) (.+?) (.+?)\" (\\d+) (\\d+|-) (\\d+)$";
             Pattern pattern = Pattern.compile(logPattern);
@@ -185,7 +185,7 @@ public class BaseTestLoggingAssertion {
             String contentLength = matcher.group(8);
             String duration = matcher.group(9);
 
-            Assertions.assertThat(ipAddress).describedAs("Client IP address").matches("/.+?:\\d+");
+            Assertions.assertThat(ipAddress).describedAs("Client IP address").matches("(\\d+\\.){3}\\d+");
             Assertions.assertThat(clientId).describedAs("Client name").isEqualTo(expectedClientId);
             Assertions.assertThat(timestamp).describedAs("Timestamp").matches(".+");
             Assertions.assertThat(httpMethod).describedAs("HTTP method").matches("[A-Z]+");
