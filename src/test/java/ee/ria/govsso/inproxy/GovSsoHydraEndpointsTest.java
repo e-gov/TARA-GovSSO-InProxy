@@ -44,7 +44,7 @@ public class GovSsoHydraEndpointsTest extends BaseTest {
 
         given()
                 .header(HttpHeaders.AUTHORIZATION, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
-                .header("X-Forwarded-For", "1.1.1.1")
+                .header("X-Forwarded-For", "2.2.2.2, 1.1.1.1")
                 .when()
                 .get("/oauth2/token")
                 .then()
@@ -92,7 +92,7 @@ public class GovSsoHydraEndpointsTest extends BaseTest {
 
         given()
                 .header(HttpHeaders.AUTHORIZATION, "Basic " + authorization)
-                .header("X-Forwarded-For", "1.1.1.1")
+                .header("X-Forwarded-For", "2.2.2.2, 1.1.1.1")
                 .when()
                 .get("/oauth2/token")
                 .then()
@@ -129,7 +129,7 @@ public class GovSsoHydraEndpointsTest extends BaseTest {
 
         given()
                 .header(HttpHeaders.AUTHORIZATION, "Basic " + authorization)
-                .header("X-Forwarded-For", "1.1.1.1")
+                .header("X-Forwarded-For", "2.2.2.2, 1.1.1.1")
                 .when()
                 .get("/oauth2/token")
                 .then()
@@ -156,7 +156,7 @@ public class GovSsoHydraEndpointsTest extends BaseTest {
 
         given()
                 .header(HttpHeaders.AUTHORIZATION, "Basic " + authorization)
-                .header("X-Forwarded-For", "1.1.1.1")
+                .header("X-Forwarded-For", "2.2.2.2, 1.1.1.1")
                 .when()
                 .get("/oauth2/token")
                 .then()
