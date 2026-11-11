@@ -17,24 +17,31 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+
 @RequiredArgsConstructor
 public class SetXForwardedForHeaderFilter implements HttpHeadersFilter, Ordered {
 
     public static final String X_FORWARDED_FOR = "X-Forwarded-For";
 
-    private final boolean appendProximateClient;
+    private final boolean appendProximateClientIp;
     private final ForwardedChainResolver forwardedChainResolver;
 
     @Override
     public HttpHeaders filter(HttpHeaders headers, ServerWebExchange exchange) {
         HttpHeaders result = copyOf(headers);
-        result.set(X_FORWARDED_FOR, computeHeaderValue(exchange.getRequest()));
+        String headerValue = computeHeaderValue(exchange.getRequest());
+        if (isNotBlank(headerValue)) {
+            result.set(X_FORWARDED_FOR, headerValue);
+        } else {
+            result.remove(X_FORWARDED_FOR);
+        }
         return result;
     }
 
     private String computeHeaderValue(ServerHttpRequest request) {
         List<String> hops = forwardedChainResolver.resolve(request);
-        if (appendProximateClient) {
+        if (appendProximateClientIp) {
             String remoteIp = getRemoteIp(request);
             if (remoteIp != null) {
                 hops = Stream.concat(hops.stream(), Stream.of(remoteIp)).toList();

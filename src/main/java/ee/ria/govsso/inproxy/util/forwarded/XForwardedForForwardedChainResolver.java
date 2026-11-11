@@ -20,7 +20,7 @@ public class XForwardedForForwardedChainResolver implements ForwardedChainResolv
     @Override
     public List<String> resolve(ServerHttpRequest request) {
         if (!trustStrategy.shouldTrust(request)) {
-            log.debug("Not trusting %s header value of request".formatted(X_FORWARDED_FOR));
+            log.debug("Not trusting {} header value of request", X_FORWARDED_FOR);
             return List.of();
         }
         List<String> headerValues = request.getHeaders().getOrEmpty(X_FORWARDED_FOR);
@@ -28,7 +28,7 @@ public class XForwardedForForwardedChainResolver implements ForwardedChainResolv
             return List.of();
         }
         if (headerValues.size() > 1) {
-            log.debug("Multiple %s headers present, ignoring all");
+            log.debug("Multiple {} headers present, ignoring all", X_FORWARDED_FOR);
             return List.of();
         }
         String headerValue = headerValues.get(0);

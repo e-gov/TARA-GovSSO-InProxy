@@ -75,9 +75,7 @@ tara-govsso-inproxy:
       trust-store: classpath:inproxy.localhost.admin.truststore.p12
       trust-store-password: changeit
   token-request-block-ip-addresses: true
-  x-forwarded-headers:
-    enabled: true
+  forwarded-for:
     trust-upstream-headers:
       strategy: never # Under main we can't trust incoming headers by default, because docker-compose.yml doesn't have another proxy in front of inproxy that would always set X-Forwarded-For header. X-Forwarded-For value that could be set outside of your own infrastructure, cannot be trusted.
     append-proximal-client-ip: false
-  enable-access-log: true

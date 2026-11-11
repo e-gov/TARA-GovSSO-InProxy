@@ -21,12 +21,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -58,15 +60,17 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
         return (exchange, chain) -> {
             String clientId = null;
             try {
-                InetSocketAddress remoteAddress = remoteAddressResolver.resolve(exchange);
-                if(remoteAddress == null) {
+                String requestIpAddress = Optional.ofNullable(remoteAddressResolver.resolve(exchange))
+                        .map(InetSocketAddress::getAddress)
+                        .map(InetAddress::getHostAddress)
+                        .orElse(null);
+                if(requestIpAddress == null) {
                     throw new HydraStyleException(
                             "unauthorized_client",
                             "Unable to parse request IP",
                             HttpStatus.BAD_REQUEST
                     );
                 }
-                String requestIpAddress = remoteAddress.getAddress().getHostAddress();
                 clientId = getClientId(exchange);
                 if (clientId == null) {
                     throw new HydraStyleException(
