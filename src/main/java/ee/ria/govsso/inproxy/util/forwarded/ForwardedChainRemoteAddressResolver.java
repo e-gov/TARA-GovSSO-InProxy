@@ -19,7 +19,6 @@ public class ForwardedChainRemoteAddressResolver implements RemoteAddressResolve
     private static final IPAddressStringParameters IP_PARAMS =
             new IPAddressStringParameters.Builder().allowEmpty(false).toParams();
 
-
     private final ForwardedChainResolver forwardedChainResolver;
 
     @Override

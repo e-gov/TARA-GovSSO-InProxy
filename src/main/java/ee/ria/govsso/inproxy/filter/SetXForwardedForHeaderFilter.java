@@ -66,7 +66,6 @@ public class SetXForwardedForHeaderFilter implements HttpHeadersFilter, Ordered 
                 .orElse(null);
     }
 
-
     @Override
     public int getOrder() {
         return 1;
