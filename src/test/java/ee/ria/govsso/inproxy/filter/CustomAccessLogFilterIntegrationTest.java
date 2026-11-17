@@ -53,7 +53,6 @@ class CustomAccessLogFilterIntegrationTest extends BaseTest {
         getAccessLogger().detachAppender(accessLogAppender);
     }
 
-    // FIXME: Wrong IP asserted
     @Test
     void anyRoute_givenMultipleXForwardedForValues_thenLastValueUsed() {
         ValidatableResponse response = given()
@@ -75,7 +74,7 @@ class CustomAccessLogFilterIntegrationTest extends BaseTest {
         String message = loggingEvent.getFormattedMessage();
         assertThat(message).isEqualTo(
                 "%s - - [%s] \"GET /any-path HTTP/1.1\" 200 %d 0".formatted(
-                        "127.0.0.1",
+                        "5.5.5.5",
                         "2026-11-16T14:00:00+02:00[Europe/Tallinn]",
                         responseSize
                 )

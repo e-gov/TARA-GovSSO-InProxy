@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.cloud.gateway.support.ServerWebExchangeUtils;
-import org.springframework.cloud.gateway.support.ipresolver.RemoteAddressResolver;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.codec.Hints;
 import org.springframework.http.HttpHeaders;
@@ -38,7 +37,6 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
     public static final String REQUEST_BODY_FORM_ELEMENT_KEY = "client_id";
     public static final String CLIENT_ID_ATTR = "clientIdAttr";
 
-    private final RemoteAddressResolver remoteAddressResolver;
     private final TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService;
     private final Jackson2JsonEncoder jackson2JsonEncoder;
 
@@ -46,11 +44,9 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
     private boolean ipBlockEnabled;
 
 
-    public IpAddressGatewayFilterFactory(RemoteAddressResolver remoteAddressResolver,
-                                         TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService,
+    public IpAddressGatewayFilterFactory(TokenRequestAllowedIpAddressesService tokenRequestAllowedIpAddressesService,
                                          ObjectMapper objectMapper) {
         super(Config.class);
-        this.remoteAddressResolver = remoteAddressResolver;
         this.tokenRequestAllowedIpAddressesService = tokenRequestAllowedIpAddressesService;
         jackson2JsonEncoder = new Jackson2JsonEncoder(objectMapper);
     }
@@ -60,7 +56,7 @@ public class IpAddressGatewayFilterFactory extends AbstractGatewayFilterFactory<
         return (exchange, chain) -> {
             String clientId = null;
             try {
-                String requestIpAddress = Optional.ofNullable(remoteAddressResolver.resolve(exchange))
+                String requestIpAddress = Optional.ofNullable(exchange.getRequest().getRemoteAddress())
                         .map(InetSocketAddress::getAddress)
                         .map(InetAddress::getHostAddress)
                         .orElse(null);
