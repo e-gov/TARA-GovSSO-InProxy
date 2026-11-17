@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
-import org.springframework.cloud.gateway.support.ipresolver.RemoteAddressResolver;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatusCode;
@@ -19,7 +18,11 @@ import reactor.netty.http.server.HttpServerRequest;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 import static ee.ria.govsso.inproxy.filter.IpAddressGatewayFilterFactory.CLIENT_ID_ATTR;
@@ -33,12 +36,12 @@ public class CustomAccessLogFilter implements WebFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(CustomAccessLogFilter.class);
 
-    private final RemoteAddressResolver remoteAddressResolver;
+    private final Clock clock;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        long startTimeMillis = System.currentTimeMillis();
-        ZonedDateTime requestTime = ZonedDateTime.now();
+        Instant startedAt = Instant.now(clock);
+        ZonedDateTime requestTime = ZonedDateTime.now(clock);
 
         CountingServerHttpResponseDecorator decoratedResponse =
                 new CountingServerHttpResponseDecorator(exchange.getResponse());
@@ -48,11 +51,11 @@ public class CustomAccessLogFilter implements WebFilter {
 
         return chain.filter(mutatedExchange)
                 .doFinally(signalType -> {
-                    long duration = System.currentTimeMillis() - startTimeMillis;
+                    Duration duration = Duration.between(startedAt, Instant.now(clock));
 
                     String clientId = mutatedExchange.getAttribute(CLIENT_ID_ATTR);
 
-                    String remoteAddr = Optional.ofNullable(remoteAddressResolver.resolve(exchange))
+                    String remoteAddr = Optional.ofNullable(mutatedExchange.getRequest().getRemoteAddress())
                             .map(InetSocketAddress::getAddress)
                             .map(InetAddress::getHostAddress)
                             .orElse(null);
@@ -72,13 +75,13 @@ public class CustomAccessLogFilter implements WebFilter {
                     String logMessage = String.format("%s - %s [%s] \"%s %s %s\" %s %s %d",
                             requireNonNullElse(remoteAddr, "-"),
                             requireNonNullElse(clientId, "-"),
-                            requestTime,
+                            requestTime.format(DateTimeFormatter.ISO_ZONED_DATE_TIME),
                             method,
                             uri,
                             protocol,
                             (statusCode != null) ? String.valueOf(statusCode.value()) : "-",
                             (realContentLength > 0) ? String.valueOf(realContentLength) : "-",
-                            duration);
+                            duration.toMillis());
 
                     logger.info(logMessage);
                 });
