@@ -30,6 +30,7 @@ server:
   error:
     whitelabel:
       enabled: false
+  forward-headers-strategy: none
 
 spring:
   main:

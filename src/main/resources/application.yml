@@ -38,6 +38,7 @@ server:
     key-store-password: changeit
     key-store-type: PKCS12
     protocol: TLS
+  forward-headers-strategy: none
 
 spring:
   main:
