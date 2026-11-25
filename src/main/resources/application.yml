@@ -28,7 +28,6 @@ management:
 
 server:
   port: 13443
-  forward-headers-strategy: NONE # Under main this cannot be enabled by default, because docker-compose.yml doesn't have another proxy in front of inproxy that would always set X-Forwarded-For header. X-Forwarded-For value that could be set outside of your own infrastructure, cannot be trusted.
   ssl:
     enabled: true
     enabled-protocols: TLSv1.3
@@ -36,6 +35,7 @@ server:
     key-store-password: changeit
     key-store-type: PKCS12
     protocol: TLS
+  forward-headers-strategy: none
 
 spring:
   main:
@@ -78,3 +78,7 @@ tara-govsso-inproxy:
       trust-store-password: changeit
   token-request-block-ip-addresses: true
   enable-access-log: true
+  x-forwarded-for:
+    trust-upstream-headers:
+      strategy: never # Under main we can't trust incoming headers by default, because docker-compose.yml doesn't have another proxy in front of inproxy that would always set X-Forwarded-For header. X-Forwarded-For value that could be set outside of your own infrastructure, cannot be trusted.
+    append-proximal-client-ip: false

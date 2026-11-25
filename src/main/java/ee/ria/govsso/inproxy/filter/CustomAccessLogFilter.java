@@ -1,11 +1,11 @@
 package ee.ria.govsso.inproxy.filter;
 
-import static ee.ria.govsso.inproxy.filter.IpAddressGatewayFilterFactory.CLIENT_ID_ATTR;
-
 import ee.ria.govsso.inproxy.logging.CountingServerHttpResponseDecorator;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty;
+import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.server.reactive.AbstractServerHttpRequest;
@@ -14,70 +14,77 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
-
-import java.time.ZonedDateTime;
 import reactor.netty.http.server.HttpServerRequest;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Optional;
+
+import static ee.ria.govsso.inproxy.filter.IpAddressGatewayFilterFactory.CLIENT_ID_ATTR;
+import static java.util.Objects.requireNonNullElse;
+
 @Component
-@Order
+@ConditionalOnBooleanProperty("tara-govsso-inproxy.enable-access-log")
+@Order(Ordered.LOWEST_PRECEDENCE)
+@RequiredArgsConstructor
 public class CustomAccessLogFilter implements WebFilter {
 
-  private static final Logger logger = LoggerFactory.getLogger(CustomAccessLogFilter.class);
+    private static final Logger logger = LoggerFactory.getLogger(CustomAccessLogFilter.class);
 
-  @Value("${tara-govsso-inproxy.enable-access-log}")
-  private boolean enableAccessLog;
+    private final Clock clock;
 
-  @Override
-  public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-    if (!enableAccessLog) {
-      return chain.filter(exchange);
+    @Override
+    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+        Instant startedAt = Instant.now(clock);
+        ZonedDateTime requestTime = ZonedDateTime.now(clock);
+
+        CountingServerHttpResponseDecorator decoratedResponse =
+                new CountingServerHttpResponseDecorator(exchange.getResponse());
+        ServerWebExchange mutatedExchange = exchange.mutate()
+                .response(decoratedResponse)
+                .build();
+
+        return chain.filter(mutatedExchange)
+                .doFinally(signalType -> {
+                    Duration duration = Duration.between(startedAt, Instant.now(clock));
+
+                    String clientId = mutatedExchange.getAttribute(CLIENT_ID_ATTR);
+
+                    String remoteAddr = Optional.ofNullable(mutatedExchange.getRequest().getRemoteAddress())
+                            .map(InetSocketAddress::getAddress)
+                            .map(InetAddress::getHostAddress)
+                            .orElse(null);
+                    String method = mutatedExchange.getRequest().getMethod().name();
+                    String uri = mutatedExchange.getRequest().getPath().toString();
+
+                    String protocol = "unknown";
+                    if (mutatedExchange.getRequest() instanceof AbstractServerHttpRequest abstractserverhttprequest) {
+                        HttpServerRequest nativeRequest = abstractserverhttprequest.getNativeRequest();
+                        protocol = nativeRequest.version().text();
+                    }
+
+                    HttpStatusCode statusCode = mutatedExchange.getResponse().getStatusCode();
+
+                    long realContentLength = decoratedResponse.getByteCount();
+
+                    String logMessage = String.format("%s - %s [%s] \"%s %s %s\" %s %s %d",
+                            requireNonNullElse(remoteAddr, "-"),
+                            requireNonNullElse(clientId, "-"),
+                            requestTime.format(DateTimeFormatter.ISO_ZONED_DATE_TIME),
+                            method,
+                            uri,
+                            protocol,
+                            (statusCode != null) ? String.valueOf(statusCode.value()) : "-",
+                            (realContentLength > 0) ? String.valueOf(realContentLength) : "-",
+                            duration.toMillis());
+
+                    logger.info(logMessage);
+                });
     }
 
-    long startTimeMillis = System.currentTimeMillis();
-    ZonedDateTime requestTime = ZonedDateTime.now();
-
-    CountingServerHttpResponseDecorator decoratedResponse =
-        new CountingServerHttpResponseDecorator(exchange.getResponse());
-    ServerWebExchange mutatedExchange = exchange.mutate()
-        .response(decoratedResponse)
-        .build();
-
-    return chain.filter(mutatedExchange)
-        .doFinally(signalType -> {
-          long duration = System.currentTimeMillis() - startTimeMillis;
-
-          String clientId = mutatedExchange.getAttribute(CLIENT_ID_ATTR);
-          clientId = (clientId == null) ? "-" : clientId;
-
-          String remoteAddr = (mutatedExchange.getRequest().getRemoteAddress() != null)
-              ? mutatedExchange.getRequest().getRemoteAddress().toString() : "-";
-          String method = mutatedExchange.getRequest().getMethod().name();
-          String uri = mutatedExchange.getRequest().getPath().toString();
-
-          String protocol = "unknown";
-          if (mutatedExchange.getRequest() instanceof AbstractServerHttpRequest abstractserverhttprequest) {
-            HttpServerRequest nativeRequest = (abstractserverhttprequest).getNativeRequest();
-            protocol = nativeRequest.version().text();
-          }
-
-          HttpStatusCode statusCode = mutatedExchange.getResponse().getStatusCode();
-          String status = (statusCode != null) ? String.valueOf(statusCode.value()) : "-";
-
-          long realContentLength = decoratedResponse.getByteCount();
-          String contentLengthStr = (realContentLength > 0) ? String.valueOf(realContentLength) : "-";
-
-          String logMessage = String.format("%s - %s [%s] \"%s %s %s\" %s %s %d",
-              remoteAddr,
-              clientId,
-              requestTime,
-              method,
-              uri,
-              protocol,
-              status,
-              contentLengthStr,
-              duration);
-
-          logger.info(logMessage);
-        });
-  }
 }

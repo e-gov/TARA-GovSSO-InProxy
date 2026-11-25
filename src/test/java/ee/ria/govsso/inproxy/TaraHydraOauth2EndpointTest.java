@@ -4,10 +4,8 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ee.ria.govsso.inproxy.filter.IpAddressGatewayFilterFactory;
 import ee.ria.govsso.inproxy.service.TokenRequestAllowedIpAddressesService;
 import ee.ria.govsso.inproxy.util.TestUtils;
-import java.util.List;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -16,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+
+import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
@@ -72,7 +72,7 @@ class TaraHydraOauth2EndpointTest extends BaseTest {
                 .when()
                 .contentType("application/x-www-form-urlencoded; charset=utf-8")
                 .header(HttpHeaders.AUTHORIZATION, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
-                .header("X-Forwarded-For", "1.2.3.4")
+                .header("X-Forwarded-For", "5.6.7.8, 1.2.3.4")
                 .post("/oidc/token")
                 .then()
                 .assertThat()
@@ -98,7 +98,7 @@ class TaraHydraOauth2EndpointTest extends BaseTest {
                 .when()
                 .contentType("application/x-www-form-urlencoded; charset=utf-8")
                 .header(HttpHeaders.AUTHORIZATION, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
-                .header("X-Forwarded-For", "1.2.3.4")
+                .header("X-Forwarded-For", "5.6.7.8, 1.2.3.4")
                 .post("/oidc/token")
                 .then()
                 .assertThat()
@@ -139,7 +139,7 @@ class TaraHydraOauth2EndpointTest extends BaseTest {
                     .when()
                     .contentType("application/x-www-form-urlencoded; charset=utf-8")
                     .header(HttpHeaders.AUTHORIZATION, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
-                    .header("X-Forwarded-For", "1.2.3.4")
+                    .header("X-Forwarded-For", "5.6.7.8, 1.2.3.4")
                     .post("/oidc/token")
                     .then()
                     .assertThat()
@@ -164,7 +164,7 @@ class TaraHydraOauth2EndpointTest extends BaseTest {
             given()
                 .when()
                 .contentType("application/x-www-form-urlencoded; charset=utf-8")
-                .header("X-Forwarded-For", "1.2.3.4")
+                .header("X-Forwarded-For", "5.6.7.8, 1.2.3.4")
                 .header("X-ClientId", "client-b") // accesslog should have client-a
                 .post("/oidc/token")
                 .then()
@@ -211,7 +211,7 @@ class TaraHydraOauth2EndpointTest extends BaseTest {
         given()
                 .when()
                 .contentType("application/x-www-form-urlencoded; charset=utf-8")
-                .header("X-Forwarded-For", "1.2.3.4")
+                .header("X-Forwarded-For", "5.6.7.8, 1.2.3.4")
                 .post("/oidc/token")
                 .then()
                 .assertThat()
@@ -243,7 +243,7 @@ class TaraHydraOauth2EndpointTest extends BaseTest {
         given()
                 .when()
                 .contentType("application/x-www-form-urlencoded; charset=utf-8")
-                .header("X-Forwarded-For", "1.2.3.4")
+                .header("X-Forwarded-For", "5.6.7.8, 1.2.3.4")
                 .header(HttpHeaders.AUTHORIZATION, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
                 .body(requestBody)
                 .post("/oidc/token")
@@ -262,7 +262,7 @@ class TaraHydraOauth2EndpointTest extends BaseTest {
         given()
                 .when()
                 .contentType("application/x-www-form-urlencoded; charset=utf-8")
-                .header("X-Forwarded-For", "1.2.3.4")
+                .header("X-Forwarded-For", "5.6.7.8, 1.2.3.4")
                 .header(HttpHeaders.AUTHORIZATION, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
                 .body(requestBody)
                 .post("/oidc/token")
@@ -292,7 +292,7 @@ class TaraHydraOauth2EndpointTest extends BaseTest {
         given()
                 .when()
                 .contentType("application/x-www-form-urlencoded; charset=utf-8")
-                .header("X-Forwarded-For", "1.2.3.4")
+                .header("X-Forwarded-For", "5.6.7.8, 1.2.3.4")
                 .body(requestBody)
                 .post("/oidc/token")
                 .then()
@@ -361,7 +361,7 @@ class TaraHydraOauth2EndpointTest extends BaseTest {
 
         given()
                 .header(HttpHeaders.AUTHORIZATION, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
-                .header("X-Forwarded-For", "1.1.1.1")
+                .header("X-Forwarded-For", "2-2-2-2, 1.1.1.1")
                 .when()
                 .get("/oidc/token")
                 .then()
@@ -402,7 +402,7 @@ class TaraHydraOauth2EndpointTest extends BaseTest {
         given()
             .when()
             .contentType("application/x-www-form-urlencoded; charset=utf-8")
-            .header("X-Forwarded-For", "1.2.3.4")
+            .header("X-Forwarded-For", "5.6.7.8, 1.2.3.4")
             .body(requestBody)
             .post("/oidc/token")
             .then()
@@ -437,7 +437,7 @@ class TaraHydraOauth2EndpointTest extends BaseTest {
             .header(HttpHeaders.AUTHORIZATION, "Basic Y2xpZW50LWE6Z1gxZkJhdDNiVg==")
             .when()
             .contentType("application/x-www-form-urlencoded; charset=utf-8")
-            .header("X-Forwarded-For", "1.2.3.4")
+            .header("X-Forwarded-For", "5.6.7.8, 1.2.3.4")
             .post("/oidc/token")
             .then()
             .assertThat()
@@ -467,7 +467,7 @@ class TaraHydraOauth2EndpointTest extends BaseTest {
         given()
             .when()
             .contentType("application/x-www-form-urlencoded; charset=utf-8")
-            .header("X-Forwarded-For", "1.2.3.4")
+            .header("X-Forwarded-For", "5.6.7.8, 1.2.3.4")
             .header("X-ClientId", "client-b") // accesslog should have client-a
             .body(requestBody)
             .post("/oidc/token")
@@ -511,7 +511,7 @@ class TaraHydraOauth2EndpointTest extends BaseTest {
             given()
                 .when()
                 .contentType("application/x-www-form-urlencoded; charset=utf-8")
-                .header("X-Forwarded-For", "1.2.3.4")
+                .header("X-Forwarded-For", "5.6.7.8, 1.2.3.4")
                 .header("X-ClientId", "client-a")
                 .body(requestBody)
                 .post("/oidc/token")
